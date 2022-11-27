@@ -10,4 +10,17 @@
 // プリコンパイルするヘッダーをここに追加します
 #include "framework.h"
 
+#include <windows.h>
+#include <d3d11.h>
+#include <DirectXMath.h>
+#include <d3dcompiler.h>
+//#include <DirectXTex.h>
+#include <wrl/client.h>
+
+#include "PrivateErrorHandling.h"
+
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dxgi.lib")
+
 #endif //PCH_H

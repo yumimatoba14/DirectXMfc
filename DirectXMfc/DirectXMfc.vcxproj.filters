@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{94caf62a-f75f-45fa-ace4-8b111f5b6977}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DGraphics">
+      <UniqueIdentifier>{f7102a15-6224-4252-b097-808b2e4510df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectXMfc.h">
@@ -36,6 +42,15 @@
     <ClInclude Include="pch.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="D3DGraphics.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="PrivateErrorHandling.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DShaderContext.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectXMfc.cpp">
@@ -49,6 +64,15 @@
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DGraphics.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="PrivateErrorHandling.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DShaderContext.cpp">
+      <Filter>D3DGraphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -68,5 +92,10 @@
     <Image Include="res\Toolbar.bmp">
       <Filter>リソース ファイル</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="SampleShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
