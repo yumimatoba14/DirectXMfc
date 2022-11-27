@@ -6,6 +6,7 @@
 #pragma once
 
 #include "D3DGraphics.h"
+#include "D3DViewOp.h"
 
 // CChildView ウィンドウ
 
@@ -41,11 +42,13 @@ private:
 
 	void PrepareModels();
 	void UpdateShaderParam();
+	void UpdateView();
 private:
 	D3D11Graphics::D3DGraphics m_graphics;
 	D3D11Graphics::D3DBufferPtr m_pShaderParamConstBuf;
 	D3D11Graphics::D3DShaderContext m_sampleShaderContext;
 	Model m_model0;
+	D3DViewOp m_viewOp;
 
 	// 生成された、メッセージ割り当て関数
 protected:
@@ -54,5 +57,10 @@ protected:
 
 public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 

@@ -51,6 +51,9 @@
     <ClInclude Include="D3DShaderContext.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
+    <ClInclude Include="D3DViewOp.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectXMfc.cpp">
@@ -72,6 +75,9 @@
       <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="D3DShaderContext.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DViewOp.cpp">
       <Filter>D3DGraphics</Filter>
     </ClCompile>
   </ItemGroup>

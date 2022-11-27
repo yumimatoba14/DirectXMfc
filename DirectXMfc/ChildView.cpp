@@ -32,6 +32,11 @@ CChildView::~CChildView()
 BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_PAINT()
 	ON_WM_SIZE()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_MOUSEMOVE()
+	ON_WM_MOUSEWHEEL()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
@@ -120,9 +125,7 @@ void CChildView::UpdateShaderParam()
 		return;
 	}
 	ShaderParam shaderParam;
-	XMStoreFloat4x4(&shaderParam.viewMatrix, XMMatrixTranspose(
-		XMMatrixLookAtRH(MakeXmVector(0, 0, 1.5), MakeXmVector(0, 0, 0), MakeXmVector(0, 1, 0))
-	));
+	shaderParam.viewMatrix = m_viewOp.GetViewMatrix();
 
 	CRect rect;
 	GetClientRect(&rect);
@@ -135,7 +138,13 @@ void CChildView::UpdateShaderParam()
 	m_graphics.SetConstantBufferData(m_pShaderParamConstBuf, shaderParam);
 }
 
-void CChildView::OnPaint() 
+void CChildView::UpdateView()
+{
+	UpdateShaderParam();
+	Invalidate(TRUE);	// The value of TRUE is actually not used because OnEraseBkgnd() has been overridden.
+}
+
+void CChildView::OnPaint()
 {
 	CPaintDC dc(this); // 描画のデバイス コンテキスト
 	
@@ -145,6 +154,7 @@ void CChildView::OnPaint()
 		m_graphics.Setup(*this, rect.Size());
 
 		PrepareModels();
+		m_viewOp.SetEyePoint(0, 0, 1.5);
 		UpdateShaderParam();
 	}
 
@@ -164,7 +174,53 @@ void CChildView::OnSize(UINT nType, int cx, int cy)
 {
 	CWnd::OnSize(nType, cx, cy);
 
-	// TODO: ここにメッセージ ハンドラー コードを追加します。
 	m_graphics.ResizeBuffers(CSize(cx, cy));
 	UpdateShaderParam();
+}
+
+
+void CChildView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	if (m_viewOp.IsMouseMoving()) {
+		m_viewOp.MouseMove(point);
+		UpdateView();
+	}
+
+	CWnd::OnMouseMove(nFlags, point);
+}
+
+
+void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	m_viewOp.StartMouseMove(point);
+	UpdateView();
+
+	CWnd::OnLButtonDown(nFlags, point);
+}
+
+
+void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	m_viewOp.EndMouseMove(point);
+	UpdateView();
+
+	CWnd::OnLButtonUp(nFlags, point);
+}
+
+
+BOOL CChildView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	double stepLength = 1;
+	m_viewOp.GoForward((zDelta < 0 ? -1 : 1) * stepLength);
+	UpdateView();
+
+	return CWnd::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+
+BOOL CChildView::OnEraseBkgnd(CDC* pDC)
+{
+	// Background would be erased in OnPaint().
+	return TRUE;
+	//return CWnd::OnEraseBkgnd(pDC);
 }

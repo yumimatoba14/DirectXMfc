@@ -186,6 +186,7 @@
     <ClInclude Include="D3DGraphics.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="D3DShaderContext.h" />
+    <ClInclude Include="D3DViewOp.h" />
     <ClInclude Include="DirectXMfc.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
@@ -198,6 +199,7 @@
     <ClCompile Include="D3DGraphics.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="D3DShaderContext.cpp" />
+    <ClCompile Include="D3DViewOp.cpp" />
     <ClCompile Include="DirectXMfc.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="pch.cpp">

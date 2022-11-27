@@ -20,6 +20,7 @@ public:
 	static DXGIAdapterPtr SelectGraphicsAdapter();
 
 	D3DGraphics();
+	D3DGraphics(const D3DGraphics&) = delete;
 
 	bool HasDevice() const { return m_pDevice.Get() != nullptr; }
 	void Setup(HWND hWnd, const CSize& rectSize);
@@ -55,7 +56,7 @@ public:
 
 	D3DBufferPtr CreateIndexBuffer(const UINT* Index, UINT IndexNum);
 
-	D3DBufferPtr D3DGraphics::CreateConstantBuffer(size_t nByte);
+	D3DBufferPtr CreateConstantBuffer(size_t nByte);
 	template<class T>
 	void SetConstantBufferData(const D3DBufferPtr& pCBuffer, const T& data) {
 		m_pDC->UpdateSubresource(pCBuffer.Get(), 0, nullptr, &data, 0, 0);
@@ -74,7 +75,7 @@ public:
 	void DrawBegin();
 	void DrawTriangleList(
 		const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, const D3DBufferPtr& pIndexBuf,
-		size_t nVertex, size_t nIndex
+		size_t vertexSize, size_t nIndex
 	);
 	void SetShaderContext(const D3DShaderContext& context);
 	void DrawEnd();
