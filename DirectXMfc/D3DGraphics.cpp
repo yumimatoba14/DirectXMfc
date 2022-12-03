@@ -365,6 +365,21 @@ void D3DGraphics::DrawBegin()
 	m_pDC->OMSetRenderTargets(1, apRtv, m_pDepthStencilView.Get());
 }
 
+void D3DGraphics::DrawPointList(
+	const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, size_t vertexSize, size_t nVertex
+)
+{
+	P_ASSERT(nVertex <= UINT_MAX);
+	m_pDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	ID3D11Buffer* apVB[1] = { pVertexBuf.Get() };
+	UINT aVertexSize[1] = { (UINT)vertexSize };
+	UINT aOffset[1] = { 0 };
+	m_pDC->IASetVertexBuffers(0, 1, apVB, aVertexSize, aOffset);
+
+	SetShaderContext(sc);
+	m_pDC->Draw((UINT)nVertex, 0);
+}
+
 void D3DGraphics::DrawTriangleList(
 	const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, const D3DBufferPtr& pIndexBuf, size_t vertexSize, size_t nIndex
 )

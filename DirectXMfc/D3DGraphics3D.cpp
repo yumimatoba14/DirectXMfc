@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "D3DGraphics3D.h"
+#include "D3DModelPointList.h"
 #include "D3DModelTriangleList.h"
 #include <DirectXMath.h>
 
@@ -45,6 +46,16 @@ void D3DGraphics3D::UpdateShaderParam(const XMFLOAT4X4& viewMatrix)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void D3DGraphics3D::DrawPointList(D3DModelPointList* pModel)
+{
+	P_IS_TRUE(pModel != nullptr);
+	pModel->PreDraw(*this, m_graphics);
+	m_graphics.DrawPointList(
+		m_pointListSc, pModel->m_pVertexBuffer,
+		sizeof(D3DModelPointList::Vertex), pModel->m_nVertex
+	);
+}
+
 void D3DGraphics3D::DrawTriangleList(D3DModelTriangleList* pModel)
 {
 	P_IS_TRUE(pModel != nullptr);
@@ -80,5 +91,18 @@ void D3DGraphics3D::InitializeShaderContexts()
 		m_pShaderParamConstBuf,
 		nullptr, nullptr,
 		m_graphics.CreatePixelShader(hlslFilePath, "psMain")
+	);
+
+	D3D11_INPUT_ELEMENT_DESC aPointListElem[] = {
+		{ "POSITION",	0,	DXGI_FORMAT_R32G32B32_FLOAT,	0,	0,	D3D11_INPUT_PER_VERTEX_DATA,	0},
+		{ "COLOR"	,	0,	DXGI_FORMAT_R8G8B8A8_UNORM,	    0,	12,	D3D11_INPUT_PER_VERTEX_DATA,	0},
+	};
+	m_pointListSc.Init(
+		m_graphics.CreateInputLayout(aPointListElem, sizeof(aPointListElem) / sizeof(aPointListElem[0]), hlslFilePath, "vsMain"),
+		m_triangleListSc.GetVertexShader(),
+		m_pShaderParamConstBuf,
+		nullptr,
+		nullptr,
+		m_triangleListSc.GetPixelShader()
 	);
 }

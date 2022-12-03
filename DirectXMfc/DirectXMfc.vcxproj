@@ -188,6 +188,8 @@
     <ClInclude Include="D3DGraphics.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="D3DGraphics3D.h" />
+    <ClInclude Include="D3DModelColorUtil.h" />
+    <ClInclude Include="D3DModelPointList.h" />
     <ClInclude Include="D3DModelTriangleList.h" />
     <ClInclude Include="D3DShaderContext.h" />
     <ClInclude Include="D3DViewOp.h" />
@@ -204,6 +206,7 @@
     <ClCompile Include="D3DGraphics.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="D3DGraphics3D.cpp" />
+    <ClCompile Include="D3DModelPointList.cpp" />
     <ClCompile Include="D3DModelTriangleList.cpp" />
     <ClCompile Include="D3DShaderContext.cpp" />
     <ClCompile Include="D3DViewOp.cpp" />

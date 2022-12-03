@@ -8,6 +8,7 @@
 #include <vector>
 #include "DirectXMfc.h"
 #include "ChildView.h"
+#include "D3DModelPointList.h"
 #include "D3DModelTriangleList.h"
 
 using namespace std;
@@ -82,6 +83,7 @@ void CChildView::OnPaint()
 		m_graphics.Initialize(*this);
 
 		m_pModel.reset(new D3DModelTriangleList());
+		m_pModel.reset(new D3DModelPointList());
 		m_viewOp.SetEyePoint(0, 0, 1.5);
 		UpdateShaderParam();
 	}

@@ -6,6 +6,7 @@ class D3DViewOp;
 
 namespace D3D11Graphics {
 
+class D3DModelPointList;
 class D3DModelTriangleList;
 
 /// <summary>
@@ -14,11 +15,18 @@ class D3DModelTriangleList;
 class D3DGraphics3D
 {
 public:
+	typedef DirectX::XMFLOAT3 XMFLOAT3;
 	typedef DirectX::XMFLOAT4X4 XMFLOAT4X4;
 
 	struct ShaderParam {
 		XMFLOAT4X4 viewMatrix;
 		XMFLOAT4X4 projectionMatrix;
+	};
+
+	struct PointListVertex
+	{
+		XMFLOAT3 pos;
+		UINT rgba;
 	};
 
 public:
@@ -39,6 +47,7 @@ public:
 	void DrawBegin() { m_graphics.DrawBegin(); }
 	void DrawEnd() { m_graphics.DrawEnd(); }
 
+	void DrawPointList(D3DModelPointList* pModel);
 	void DrawTriangleList(D3DModelTriangleList* pModel);
 
 	void ResizeBuffers(const SIZE& newSize);
@@ -51,6 +60,7 @@ private:
 	float m_viewFarZ;
 	D3DBufferPtr m_pShaderParamConstBuf;
 	D3DShaderContext m_triangleListSc;
+	D3DShaderContext m_pointListSc;
 };
 
 }   // end of namespace D3D11Graphics
