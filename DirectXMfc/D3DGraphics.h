@@ -26,29 +26,16 @@ public:
 	template<class T>
 	D3DBufferPtr CreateVertexBuffer(const T* aVertex, UINT nVertex)
 	{
-		//頂点バッファ作成
-		D3D11_BUFFER_DESC hBufferDesc;
-		ZeroMemory(&hBufferDesc, sizeof(hBufferDesc));
-		hBufferDesc.ByteWidth = sizeof(T) * nVertex;
-		hBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		hBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		hBufferDesc.CPUAccessFlags = 0;
-		//hBufferDesc.MiscFlags = 0;
-		//hBufferDesc.StructureByteStride = sizeof(float);
-
-		D3D11_SUBRESOURCE_DATA hSubResourceData;
-		ZeroMemory(&hSubResourceData, sizeof(hSubResourceData));
-		hSubResourceData.pSysMem = aVertex;
-		//hSubResourceData.SysMemPitch = 0;
-		//hSubResourceData.SysMemSlicePitch = 0;
-
-		D3DBufferPtr pBuffer;
-		HRESULT hr = m_pDevice->CreateBuffer(&hBufferDesc, &hSubResourceData, &pBuffer);
-		if (FAILED(hr)) {
-			P_THROW_ERROR("CreateBuffer");
-		}
-		return pBuffer;
+		return CreateVertexBuffer(aVertex, nVertex, false);
 	}
+	
+	template<class T>
+	D3DBufferPtr CreateVertexBuffer(const T* aVertex, UINT nVertex, bool writeByCpu)
+	{
+		return CreateVertexBufferWithSize(sizeof(T) * nVertex, aVertex, writeByCpu);
+	}
+
+	D3DBufferPtr CreateVertexBufferWithSize(UINT nByte, const void* aVertex, bool writeByCpu);
 
 	D3DBufferPtr CreateIndexBuffer(const UINT* Index, UINT IndexNum);
 

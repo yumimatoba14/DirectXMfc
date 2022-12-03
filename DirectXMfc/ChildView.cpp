@@ -9,6 +9,7 @@
 #include "DirectXMfc.h"
 #include "ChildView.h"
 #include "D3DModelPointList.h"
+#include "PointListSampleModel.h"
 #include "D3DModelTriangleList.h"
 
 using namespace std;
@@ -78,14 +79,15 @@ void CChildView::UpdateView()
 void CChildView::OnPaint()
 {
 	CPaintDC dc(this); // 描画のデバイス コンテキスト
+	ULONGLONG startTickMiliSec = ::GetTickCount64();
 	
 	if (!m_graphics.IsInitialized()) {
 		m_graphics.Initialize(*this);
 
 		m_pModel.reset(new D3DModelTriangleList());
 		m_pModel.reset(new D3DModelPointList()); m_graphics.SetPointSize(0.1);
-		m_viewOp.SetEyePoint(0, 0, 1.5);
-		m_graphics.SetFovAngleYInDegree(90);
+		m_pModel.reset(new PointListSampleModel()); m_graphics.SetPointSize(0.001);
+		m_viewOp.SetEyePoint(0, 0, 3);
 		UpdateShaderParam();
 	}
 
@@ -93,6 +95,10 @@ void CChildView::OnPaint()
 	m_pModel->DrawTo(m_graphics);
 	m_graphics.DrawEnd();
 
+	ULONGLONG miliSec = ::GetTickCount64() - startTickMiliSec;
+	CString msg;
+	msg.Format(_T("%lg msec"), double(miliSec));
+	dc.TextOut(0, 50, msg);
 	// メッセージの描画のために CWnd::OnPaint() を呼び出さないでください。
 }
 

@@ -166,6 +166,39 @@ void D3DGraphics::Setup(HWND hWnd, const CSize& rectSize)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+D3DBufferPtr D3DGraphics::CreateVertexBufferWithSize(UINT nByte, const void* aVertex, bool writeByCpu)
+{
+	D3D11_BUFFER_DESC hBufferDesc;
+	ZeroMemory(&hBufferDesc, sizeof(hBufferDesc));
+	hBufferDesc.ByteWidth = nByte;
+	hBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	if (writeByCpu) {
+		hBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		hBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	}
+	else {
+		hBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		hBufferDesc.CPUAccessFlags = 0;
+	}
+	//hBufferDesc.MiscFlags = 0;
+	//hBufferDesc.StructureByteStride = sizeof(float);
+
+	D3D11_SUBRESOURCE_DATA hSubResourceData;
+	if (aVertex) {
+		ZeroMemory(&hSubResourceData, sizeof(hSubResourceData));
+		hSubResourceData.pSysMem = aVertex;
+		//hSubResourceData.SysMemPitch = 0;
+		//hSubResourceData.SysMemSlicePitch = 0;
+	}
+
+	D3DBufferPtr pBuffer;
+	HRESULT hr = m_pDevice->CreateBuffer(&hBufferDesc, aVertex ? &hSubResourceData : nullptr, &pBuffer);
+	if (FAILED(hr)) {
+		P_THROW_ERROR("CreateBuffer");
+	}
+	return pBuffer;
+}
+
 D3DBufferPtr D3DGraphics::CreateIndexBuffer(const UINT* aIndex, UINT nIndex)
 {
 	D3D11_BUFFER_DESC hBufferDesc;

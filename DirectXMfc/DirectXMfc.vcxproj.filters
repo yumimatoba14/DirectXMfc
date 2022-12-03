@@ -63,6 +63,9 @@
     <ClInclude Include="D3DModelPointList.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
+    <ClInclude Include="PointListSampleModel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="D3D11Graphics.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
@@ -106,6 +109,9 @@
     </ClCompile>
     <ClCompile Include="D3DModelPointList.cpp">
       <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="PointListSampleModel.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="D3DDrawingModel.cpp">
       <Filter>D3DGraphics</Filter>
