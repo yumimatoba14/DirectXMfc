@@ -7,10 +7,6 @@
 
 namespace D3D11Graphics {
 
-typedef Microsoft::WRL::ComPtr<ID3D11VertexShader> D3DVertexShaderPtr;
-typedef Microsoft::WRL::ComPtr<ID3D11GeometryShader> D3DGeometryShaderPtr;
-typedef Microsoft::WRL::ComPtr<ID3D11PixelShader> D3DPixelShaderPtr;
-
 class D3DGraphics
 {
 public:

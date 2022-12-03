@@ -54,6 +54,18 @@
     <ClInclude Include="D3DViewOp.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
+    <ClInclude Include="D3DGraphics3D.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DModelTriangleList.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D11Graphics.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DDrawingModel.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectXMfc.cpp">
@@ -78,6 +90,15 @@
       <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="D3DViewOp.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DGraphics3D.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DModelTriangleList.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DDrawingModel.cpp">
       <Filter>D3DGraphics</Filter>
     </ClCompile>
   </ItemGroup>

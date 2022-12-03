@@ -5,8 +5,10 @@
 
 #pragma once
 
-#include "D3DGraphics.h"
+#include "D3DGraphics3D.h"
 #include "D3DViewOp.h"
+#include "D3DDrawingModel.h"
+#include <memory>
 
 // CChildView ウィンドウ
 
@@ -31,24 +33,12 @@ public:
 	virtual ~CChildView();
 
 private:
-	struct Model {
-		D3D11Graphics::D3DBufferPtr pVertexBuffer;
-		D3D11Graphics::D3DBufferPtr pIndexBuffer;
-		size_t vertexSize{};
-		size_t nVertex{};
-		size_t nIndex{};
-		Model() : vertexSize(0), nVertex(0), nIndex(0) {}
-	};
-
-	void PrepareModels();
 	void UpdateShaderParam();
 	void UpdateView();
 private:
-	D3D11Graphics::D3DGraphics m_graphics;
-	D3D11Graphics::D3DBufferPtr m_pShaderParamConstBuf;
-	D3D11Graphics::D3DShaderContext m_sampleShaderContext;
-	Model m_model0;
+	D3D11Graphics::D3DGraphics3D m_graphics;
 	D3DViewOp m_viewOp;
+	std::unique_ptr<D3D11Graphics::D3DDrawingModel> m_pModel;
 
 	// 生成された、メッセージ割り当て関数
 protected:

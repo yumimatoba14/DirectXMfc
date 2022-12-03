@@ -369,6 +369,7 @@ void D3DGraphics::DrawTriangleList(
 	const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, const D3DBufferPtr& pIndexBuf, size_t vertexSize, size_t nIndex
 )
 {
+	P_ASSERT(nIndex <= UINT_MAX);
 	m_pDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	ID3D11Buffer* apVB[1] = { pVertexBuf.Get() };
 	UINT aVertexSize[1] = { (UINT)vertexSize };
@@ -399,12 +400,15 @@ void D3DGraphics::SetShaderContext(const D3DShaderContext& context)
 
 void D3DGraphics::DrawEnd()
 {
-	m_pSwapChain->Present(0, 0);
+	HRESULT hr = m_pSwapChain->Present(0, 0);
+	if (FAILED(hr)) {
+		P_IGNORE_ERROR("Present");
+	}
 }
 
 void D3DGraphics::ResizeBuffers(const CSize& newSize)
 {
-	P_C_FUNC_BEGIN("D3DGraphics::ResizeBuffers");
+	P_NOEXCEPT_BEGIN("D3DGraphics::ResizeBuffers");
 	if (m_pSwapChain) {
 		// release related buffer objects.
 		// See https://learn.microsoft.com/ja-jp/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-resizebuffers?source=recommendations
@@ -421,7 +425,7 @@ void D3DGraphics::ResizeBuffers(const CSize& newSize)
 		m_viewport.Width = float(newSize.cx);
 		m_viewport.Height = float(newSize.cy);
 	}
-	P_C_FUNC_END;
+	P_NOEXCEPT_END;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

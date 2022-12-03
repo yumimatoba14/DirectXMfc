@@ -183,8 +183,12 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="D3D11Graphics.h" />
+    <ClInclude Include="D3DDrawingModel.h" />
     <ClInclude Include="D3DGraphics.h" />
     <ClInclude Include="ChildView.h" />
+    <ClInclude Include="D3DGraphics3D.h" />
+    <ClInclude Include="D3DModelTriangleList.h" />
     <ClInclude Include="D3DShaderContext.h" />
     <ClInclude Include="D3DViewOp.h" />
     <ClInclude Include="DirectXMfc.h" />
@@ -196,8 +200,11 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3DDrawingModel.cpp" />
     <ClCompile Include="D3DGraphics.cpp" />
     <ClCompile Include="ChildView.cpp" />
+    <ClCompile Include="D3DGraphics3D.cpp" />
+    <ClCompile Include="D3DModelTriangleList.cpp" />
     <ClCompile Include="D3DShaderContext.cpp" />
     <ClCompile Include="D3DViewOp.cpp" />
     <ClCompile Include="DirectXMfc.cpp" />

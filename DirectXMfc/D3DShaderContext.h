@@ -2,14 +2,9 @@
 
 #include <d3d11.h>
 #include <wrl/client.h>
+#include "D3D11Graphics.h"
 
 namespace D3D11Graphics {
-
-typedef Microsoft::WRL::ComPtr<ID3D11InputLayout> D3DInputLayoutPtr;
-typedef Microsoft::WRL::ComPtr<ID3D11VertexShader> D3DVertexShaderPtr;
-typedef Microsoft::WRL::ComPtr<ID3D11GeometryShader> D3DGeometryShaderPtr;
-typedef Microsoft::WRL::ComPtr<ID3D11PixelShader> D3DPixelShaderPtr;
-typedef Microsoft::WRL::ComPtr<ID3D11Buffer> D3DBufferPtr;
 
 class D3DShaderContext
 {
