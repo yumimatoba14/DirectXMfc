@@ -21,6 +21,10 @@ public:
 	struct ShaderParam {
 		XMFLOAT4X4 viewMatrix;
 		XMFLOAT4X4 projectionMatrix;
+		float pointSizeX;
+		float pointSizeY;
+		float pixelSizeX;
+		float pixelSizeY;
 	};
 
 	struct PointListVertex
@@ -35,6 +39,28 @@ public:
 
 	void Initialize(HWND hWnd);
 	bool IsInitialized() const { return m_graphics.HasDevice(); }
+
+	/// <summary>
+	/// Get field-of-view angle of Y direction in degree.
+	/// </summary>
+	/// <returns></returns>
+	double GetFovAngleYInDegree() const { return m_fovAngleYDeg; }
+	void SetFovAngleYInDegree(double degree) { m_fovAngleYDeg = degree; }
+
+	/// <summary>
+	/// Return size of point.
+	/// A negative value is used when it represents relative size.
+	/// </summary>
+	/// <returns></returns>
+	double GetPointSize() const { return m_pointSize; }
+
+	/// <summary>
+	/// Set a size of drawn point.
+	/// It is roughly a length in model space if a positive value is set.
+	/// Set a negative value to specify relative size in pixel.
+	/// </summary>
+	/// <param name="size"></param>
+	void SetPointSize(double size) { m_pointSize = size; }
 
 	/// <summary>
 	/// 
@@ -58,6 +84,8 @@ private:
 	SIZE m_viewSize;
 	float m_viewNearZ;
 	float m_viewFarZ;
+	double m_fovAngleYDeg;
+	double m_pointSize;
 	D3DBufferPtr m_pShaderParamConstBuf;
 	D3DShaderContext m_triangleListSc;
 	D3DShaderContext m_pointListSc;

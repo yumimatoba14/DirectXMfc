@@ -83,8 +83,9 @@ void CChildView::OnPaint()
 		m_graphics.Initialize(*this);
 
 		m_pModel.reset(new D3DModelTriangleList());
-		m_pModel.reset(new D3DModelPointList());
+		m_pModel.reset(new D3DModelPointList()); m_graphics.SetPointSize(0.1);
 		m_viewOp.SetEyePoint(0, 0, 1.5);
+		m_graphics.SetFovAngleYInDegree(90);
 		UpdateShaderParam();
 	}
 
