@@ -381,6 +381,19 @@ D3DPixelShaderPtr D3DGraphics::CreatePixelShader(const string& fileName, const s
 
 ////////////////////////////////////////////////////////////////////////////////
 
+D3DMappedSubResource D3DGraphics::MapDyamaicBuffer(const D3DBufferPtr& pDynamicBuffer)
+{
+	P_IS_TRUE(pDynamicBuffer != nullptr);
+	D3D11_MAP mapType = D3D11_MAP_WRITE_DISCARD;
+	UINT mapFlags = 0;
+	D3D11_MAPPED_SUBRESOURCE mappedData;
+	ZeroMemory(&mappedData, sizeof(D3D11_MAPPED_SUBRESOURCE));
+	m_pDC->Map(pDynamicBuffer.Get(), 0, mapType, mapFlags, &mappedData);
+	return D3DMappedSubResource(m_pDC, pDynamicBuffer, mappedData.pData);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void D3DGraphics::DrawBegin()
 {
 	PrepareDepthStencilView();

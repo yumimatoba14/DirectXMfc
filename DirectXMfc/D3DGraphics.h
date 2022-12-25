@@ -4,6 +4,7 @@
 #include <wrl/client.h>
 #include <string>
 #include "D3DShaderContext.h"
+#include "D3DMappedSubResource.h"
 
 namespace D3D11Graphics {
 
@@ -52,6 +53,9 @@ public:
 	D3DVertexShaderPtr CreateVertexShader(const std::string& fileName, const std::string& entryPoint);
 	D3DGeometryShaderPtr CreateGeometryShader(const std::string& fileName, const std::string& entryPoint);
 	D3DPixelShaderPtr CreatePixelShader(const std::string& fileName, const std::string& entryPoint);
+
+public:
+	D3DMappedSubResource MapDyamaicBuffer(const D3DBufferPtr& pDynamicBuffer);
 
 	// functions for DeviceContext.
 public:
