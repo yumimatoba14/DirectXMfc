@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "D3DGraphics3D.h"
 #include "D3DModelPointList.h"
+#include "D3DModelPointListEnumerator.h"
 #include "D3DModelTriangleList.h"
 #include <DirectXMath.h>
 #define _USE_MATH_DEFINES	// In order to use M_PI, which is not in the C standard.
@@ -31,6 +32,12 @@ void D3DGraphics3D::Initialize(HWND hWnd)
 	m_graphics.Setup(hWnd, m_viewSize);
 
 	InitializeShaderContexts();
+}
+
+void D3DGraphics3D::SetProgressiveViewMode(bool enableProgressiveView, bool isFollowingFrame)
+{
+	m_isProgressiveViewMode = enableProgressiveView;
+	m_isProgressiveViewFollowingFrame = enableProgressiveView && isFollowingFrame;
 }
 
 void D3DGraphics3D::UpdateShaderParam(const XMFLOAT4X4& viewMatrix)
@@ -70,6 +77,12 @@ void D3DGraphics3D::UpdateShaderParam(const XMFLOAT4X4& viewMatrix)
 	m_graphics.SetConstantBufferData(m_pShaderParamConstBuf, shaderParam);
 }
 
+void D3DGraphics3D::DrawBegin()
+{
+	bool isEraseBackground = !(IsProgressiveViewMode() && IsProgressiveViewFollowingFrame());
+	m_graphics.DrawBegin(isEraseBackground);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void D3DGraphics3D::DrawPointList(D3DModelPointList* pModel)
@@ -80,6 +93,16 @@ void D3DGraphics3D::DrawPointList(D3DModelPointList* pModel)
 		m_pointListSc, pModel->m_pVertexBuffer,
 		sizeof(D3DModelPointList::Vertex), pModel->m_nVertex
 	);
+}
+
+void D3DGraphics3D::DrawPointListEnumerator(D3DModelPointListEnumerator* pModel)
+{
+	P_IS_TRUE(pModel != nullptr);
+	pModel->PreDraw(*this, m_graphics);
+	if (pModel->HasCurrent()) {
+		m_graphics.DrawPointLists(m_pointListSc, pModel, sizeof(D3DModelPointList::Vertex));
+	}
+	pModel->PostDraw();
 }
 
 void D3DGraphics3D::DrawTriangleList(D3DModelTriangleList* pModel)

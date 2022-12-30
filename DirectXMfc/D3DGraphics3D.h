@@ -7,6 +7,7 @@ class D3DViewOp;
 namespace D3D11Graphics {
 
 class D3DModelPointList;
+class D3DModelPointListEnumerator;
 class D3DModelTriangleList;
 
 /// <summary>
@@ -40,6 +41,13 @@ public:
 	void Initialize(HWND hWnd);
 	bool IsInitialized() const { return m_graphics.HasDevice(); }
 
+	bool IsViewMoving() const { return m_isViewMoving; }
+	void SetViewMoving(bool isMoving) { m_isViewMoving = isMoving; }
+
+	bool IsProgressiveViewMode() const { return m_isProgressiveViewMode; }
+	bool IsProgressiveViewFollowingFrame() const { return m_isProgressiveViewFollowingFrame; }
+	void SetProgressiveViewMode(bool enableProgressiveView, bool isFollowingFrame = false);
+
 	/// <summary>
 	/// Get field-of-view angle of Y direction in degree.
 	/// </summary>
@@ -70,13 +78,16 @@ public:
 	/// </param>
 	void UpdateShaderParam(const XMFLOAT4X4& viewMatrix);
 
-	void DrawBegin() { m_graphics.DrawBegin(); }
+	void DrawBegin();
 	void DrawEnd() { m_graphics.DrawEnd(); }
 
 	void DrawPointList(D3DModelPointList* pModel);
+	void DrawPointListEnumerator(D3DModelPointListEnumerator* pModel);
 	void DrawTriangleList(D3DModelTriangleList* pModel);
 
 	void ResizeBuffers(const SIZE& newSize);
+
+	size_t GetDrawnPointCount() const { return m_graphics.GetDrawnPointCount(); }
 private:
 	void InitializeShaderContexts();
 private:
@@ -89,6 +100,9 @@ private:
 	D3DBufferPtr m_pShaderParamConstBuf;
 	D3DShaderContext m_triangleListSc;
 	D3DShaderContext m_pointListSc;
+	bool m_isViewMoving = false;
+	bool m_isProgressiveViewMode = false;
+	bool m_isProgressiveViewFollowingFrame = false;
 };
 
 }   // end of namespace D3D11Graphics

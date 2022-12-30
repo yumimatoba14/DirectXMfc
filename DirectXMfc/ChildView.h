@@ -39,6 +39,8 @@ private:
 	D3D11Graphics::D3DGraphics3D m_graphics;
 	D3DViewOp m_viewOp;
 	std::unique_ptr<D3D11Graphics::D3DDrawingModel> m_pModel;
+	UINT_PTR m_progressiveViewTimerId = 0;
+	bool m_restartProgressiveView = true;
 
 	// 生成された、メッセージ割り当て関数
 protected:
@@ -51,6 +53,7 @@ public:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 

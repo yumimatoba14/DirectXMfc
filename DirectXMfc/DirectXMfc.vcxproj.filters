@@ -66,7 +66,13 @@
     <ClInclude Include="PointListSampleModel.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="D3DVertexBufferEnumerator.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
     <ClInclude Include="D3D11Graphics.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DModelPointListEnumerator.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
     <ClInclude Include="D3DMappedSubResource.h">
@@ -115,6 +121,12 @@
     </ClCompile>
     <ClCompile Include="PointListSampleModel.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DVertexBufferEnumerator.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DModelPointListEnumerator.cpp">
+      <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="D3DMappedSubResource.cpp">
       <Filter>D3DGraphics</Filter>

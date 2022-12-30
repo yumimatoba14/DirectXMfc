@@ -8,6 +8,8 @@
 
 namespace D3D11Graphics {
 
+class D3DVertexBufferEnumerator;
+
 class D3DGraphics
 {
 public:
@@ -21,6 +23,12 @@ public:
 
 	bool HasDevice() const { return m_pDevice.Get() != nullptr; }
 	void Setup(HWND hWnd, const CSize& rectSize);
+
+	/// <summary>
+	/// return a number of points to be drawn by DrawPointList() or DrawPointLists().
+	/// </summary>
+	/// <returns>Number of points to be drawn after the last DrawBegin().</returns>
+	size_t GetDrawnPointCount() const { return m_nDrawnPoint; }
 
 	// functions for Device.
 public:
@@ -59,9 +67,12 @@ public:
 
 	// functions for DeviceContext.
 public:
-	void DrawBegin();
+	void DrawBegin(bool isEraseBackground);
 	void DrawPointList(
 		const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, size_t vertexSize, size_t nVertex
+	);
+	void DrawPointLists(
+		const D3DShaderContext& sc, D3DVertexBufferEnumerator* pVertexBufs, size_t vertexSize
 	);
 	void DrawTriangleList(
 		const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, const D3DBufferPtr& pIndexBuf,
@@ -90,6 +101,8 @@ private:
 	D3D11_VIEWPORT m_viewport = { 0, 0, 0, 0, 0, 0 };
 
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_pRasterizerState;
+
+	size_t m_nDrawnPoint = 0;
 };
 
 } // namespace D3D11Graphics

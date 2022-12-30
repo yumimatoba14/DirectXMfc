@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "D3DGraphics.h"
 #include <exception>
+#include "D3DVertexBufferEnumerator.h"
 
 using namespace Microsoft::WRL;
 using namespace std;
@@ -394,14 +395,16 @@ D3DMappedSubResource D3DGraphics::MapDyamaicBuffer(const D3DBufferPtr& pDynamicB
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void D3DGraphics::DrawBegin()
+void D3DGraphics::DrawBegin(bool isEraseBackground)
 {
 	PrepareDepthStencilView();
 	PrepareRenderTargetView();
 
-	float aClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f }; //red,green,blue,alpha
-	m_pDC->ClearRenderTargetView(m_pRenderTargetView.Get(), aClearColor);
-	m_pDC->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	if (isEraseBackground) {
+		float aClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f }; //red,green,blue,alpha
+		m_pDC->ClearRenderTargetView(m_pRenderTargetView.Get(), aClearColor);
+		m_pDC->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	}
 
 	m_pDC->RSSetViewports(1, &m_viewport);
 	m_pDC->RSSetState(m_pRasterizerState.Get());
@@ -409,6 +412,8 @@ void D3DGraphics::DrawBegin()
 
 	ID3D11RenderTargetView* apRtv[1] = { m_pRenderTargetView.Get() };
 	m_pDC->OMSetRenderTargets(1, apRtv, m_pDepthStencilView.Get());
+
+	m_nDrawnPoint = 0;
 }
 
 void D3DGraphics::DrawPointList(
@@ -424,6 +429,29 @@ void D3DGraphics::DrawPointList(
 
 	SetShaderContext(sc);
 	m_pDC->Draw((UINT)nVertex, 0);
+
+	m_nDrawnPoint += nVertex;
+}
+
+void D3DGraphics::DrawPointLists(
+	const D3DShaderContext& sc, D3DVertexBufferEnumerator* pVertexBufs, size_t vertexSize
+)
+{
+	P_IS_TRUE(pVertexBufs != nullptr);
+	m_pDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	SetShaderContext(sc);
+	UINT aVertexSize[1] = { (UINT)vertexSize };
+
+	for (; pVertexBufs->HasCurrent();  pVertexBufs->GoNext()) {
+		ID3D11Buffer* apVB[1] = { pVertexBufs->GetCurrent().pVertexBuffer.Get() };
+		UINT aOffset[1] = { 0 };
+		m_pDC->IASetVertexBuffers(0, 1, apVB, aVertexSize, aOffset);
+
+		const UINT nVertex = pVertexBufs->GetCurrent().nVertex;
+		m_pDC->Draw(nVertex, 0);
+
+		m_nDrawnPoint += nVertex;
+	}
 }
 
 void D3DGraphics::DrawTriangleList(

@@ -20,6 +20,7 @@ using namespace DirectX;
 #define new DEBUG_NEW
 #endif
 
+#define ID_PROGRESSIVE_VIEW_TIMER (1)
 
 // CChildView
 
@@ -39,6 +40,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_MOUSEWHEEL()
+	ON_WM_TIMER()
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
@@ -87,19 +89,40 @@ void CChildView::OnPaint()
 		m_pModel.reset(new D3DModelTriangleList());
 		m_pModel.reset(new D3DModelPointList()); m_graphics.SetPointSize(0.1);
 		m_pModel.reset(new PointListSampleModel()); m_graphics.SetPointSize(0.001);
+		m_pModel.reset(new PointListEnumeratorSampleModel()); m_graphics.SetPointSize(0.001);
 		m_viewOp.SetEyePoint(0, 0, 3);
 		UpdateShaderParam();
 	}
 
+	m_graphics.SetProgressiveViewMode(m_viewOp.IsMouseMoving(), !m_restartProgressiveView);
+
+	const bool isMouseMoveCullingEnabled = false;
+	if (isMouseMoveCullingEnabled) {
+		m_graphics.SetViewMoving(m_viewOp.IsMouseMoving());
+	}
 	m_graphics.DrawBegin();
 	m_pModel->DrawTo(m_graphics);
 	m_graphics.DrawEnd();
 
+	size_t nDrawnPoint = m_graphics.GetDrawnPointCount();
+
 	ULONGLONG miliSec = ::GetTickCount64() - startTickMiliSec;
 	CString msg;
+	const int textHeight = 20;
+	int textY = 50;
 	msg.Format(_T("%lg msec"), double(miliSec));
-	dc.TextOut(0, 50, msg);
-	// メッセージの描画のために CWnd::OnPaint() を呼び出さないでください。
+	dc.TextOut(0, textY, msg);
+	textY += textHeight;
+	msg.Format(_T("%zu points drawn"), nDrawnPoint);
+	dc.TextOut(0, textY, msg);
+
+	bool isViewUpdaed = nDrawnPoint > 0;
+	if (m_graphics.IsProgressiveViewMode() && isViewUpdaed) {
+		UINT nEllapse = 1;
+		if (m_progressiveViewTimerId == 0) {
+			m_progressiveViewTimerId = SetTimer(ID_PROGRESSIVE_VIEW_TIMER, nEllapse, nullptr);
+		}
+	}
 }
 
 
@@ -152,9 +175,22 @@ BOOL CChildView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 }
 
 
+void CChildView::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == ID_PROGRESSIVE_VIEW_TIMER) {
+		KillTimer(m_progressiveViewTimerId);
+		m_progressiveViewTimerId = 0;
+		m_restartProgressiveView = false;
+		Invalidate(FALSE);
+	}
+	CWnd::OnTimer(nIDEvent);
+}
+
+
 BOOL CChildView::OnEraseBkgnd(CDC* pDC)
 {
 	// Background would be erased in OnPaint().
+	m_restartProgressiveView = true;
 	return TRUE;
 	//return CWnd::OnEraseBkgnd(pDC);
 }
