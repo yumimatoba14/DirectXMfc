@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "PointListSampleModel.h"
 #include "D3DModelColorUtil.h"
+#include "D3DPointListBuilder.h"
+#include "D3DWin32File.h"
+#include <memory>
 
 using namespace std;
 using namespace D3D11Graphics;
@@ -143,4 +146,157 @@ void PointListEnumeratorSampleModel::PrepareVertices(D3D11Graphics::D3DGraphics&
 
 	m_pVertexBuffer = g.CreateVertexBufferWithSize(
 		static_cast<UINT>(m_nVertexInUnit * sizeof(Vertex)), nullptr, true);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+MemoryMappedPointListEnumeratorSampleModel::MemoryMappedPointListEnumeratorSampleModel(LPCTSTR pFilePath)
+{
+	m_nVertexInUnit = 1 << 20;
+	m_filePath = pFilePath ? pFilePath : _T("PlainPointCloud.bin");
+}
+
+void MemoryMappedPointListEnumeratorSampleModel::OnPreDraw(D3D11Graphics::D3DGraphics3D& g3D, D3D11Graphics::D3DGraphics& g)
+{
+	m_nVertexInFile = PrepareFile();
+	PrepareVertexBuffer(g);
+	P_ASSERT(m_pVertexBuffer);
+
+	bool isOk = m_mmFile.OpenToRead(m_filePath);
+	if (!isOk) {
+		P_THROW_ERROR("Open");
+	}
+
+	if (g3D.IsProgressiveViewMode()) {
+		m_nMaxDrawnPointInFrame = m_nVertexInUnit;
+		if (!g3D.IsProgressiveViewFollowingFrame()) {
+			m_nextVertex = 0;
+		}
+		m_firstVertexInFrame = m_nextVertex;
+	}
+	else {
+		m_nextVertex = 0;
+		m_firstVertexInFrame = 0;
+		m_nMaxDrawnPointInFrame = 0;
+	}
+
+	m_pGraphics = &g;
+
+	GoNext();
+}
+
+void MemoryMappedPointListEnumeratorSampleModel::OnPostDraw()
+{
+	m_pGraphics = nullptr;
+}
+
+D3DVertexBufferEnumerator::VertexBufferData MemoryMappedPointListEnumeratorSampleModel::OnGetNext()
+{
+	UINT nVertex = 0;
+
+	uint64_t endVertex = min(m_nextVertex + m_nVertexInUnit, m_nVertexInFile);
+
+	nVertex = static_cast<UINT>(endVertex - m_nextVertex);
+
+	if (0 < m_nMaxDrawnPointInFrame) {
+		if (m_firstVertexInFrame + m_nMaxDrawnPointInFrame <= m_nextVertex) {
+			// This frame should be ended since m_nMaxDrawnPointInFrame points had been drawn.
+			nVertex = 0;
+		}
+	}
+
+	if (nVertex == 0) {
+		return D3DVertexBufferEnumerator::VertexBufferData{ nullptr, 0 };
+	}
+
+	{
+		D3DMappedSubResource mappedMemory = m_pGraphics->MapDyamaicBuffer(m_pVertexBuffer);
+		UINT dataSize = nVertex * sizeof(Vertex);
+		auto pSrc = m_mmFile.MapView(m_nextVertex * sizeof(Vertex), dataSize);
+		mappedMemory.Write(pSrc.Get(), dataSize);
+	}
+
+	m_nextVertex = endVertex;
+	return D3DVertexBufferEnumerator::VertexBufferData{ m_pVertexBuffer, nVertex };
+}
+
+namespace {
+	class PlainPointListBuilder : public D3DPointListBuilder
+	{
+	public:
+		PlainPointListBuilder(LPCTSTR pFilePath)
+		{
+			m_outputFile.OpenNewFile(pFilePath);
+		}
+
+	protected:
+		virtual void OnAddVertex(const Vertex& vertex)
+		{
+			m_outputFile.Write(&vertex, sizeof(Vertex));
+			++m_nAddedVertex;
+		}
+
+		virtual uint64_t OnGetVertexCount() const { return m_nAddedVertex; }
+
+	private:
+		D3DWin32File m_outputFile;
+		uint64_t m_nAddedVertex = 0;
+	};
+}
+
+static uint64_t ToUInt64(DWORD high, DWORD low) { return (uint64_t(high) << 32) + low; }
+
+/// <summary>
+/// Create a file if it does not exist.
+/// </summary>
+/// <returns>number of vertex in file.</returns>
+uint64_t MemoryMappedPointListEnumeratorSampleModel::PrepareFile()
+{
+	WIN32_FIND_DATA findFileData;
+	D3DUniqueFindFileHandle hFind(::FindFirstFile(m_filePath, &findFileData));
+	if (hFind.get() != INVALID_HANDLE_VALUE) {
+		uint64_t fileSize = ToUInt64(findFileData.nFileSizeHigh, findFileData.nFileSizeLow);
+		return fileSize / sizeof(Vertex);
+	}
+
+	unique_ptr<PlainPointListBuilder> pBuilder;
+	pBuilder = make_unique<PlainPointListBuilder>(m_filePath);
+
+	const size_t nX = 1000;
+	const size_t nY = 1000;
+	const size_t nZ = 10;
+	const double x0 = 0;
+	const double y0 = 0;
+	const double z0 = 0;
+	const double aDist[3] = { 1.0 / nX, 1.0 / nY, -0.1 };
+	const UINT aColor[3] = {
+		RgbaF(0.0f, 1.0f, 1.0f, 1),
+		RgbaF(0.0f, 0.0f, 1.0f, 1),
+		RgbaF(1.0f, 0.0f, 0.5f, 1)
+	};
+	const UINT color2 = RgbaF(0.5f, 0.0f, 1.0f, 1);
+	const bool useAnotherColor = false;
+	for (size_t iZ = 0; iZ < nZ; ++iZ) {
+		const float z = float(z0 + iZ * aDist[2]);
+		const UINT color = aColor[iZ % 3];
+		for (size_t iY = 0; iY < nY; ++iY) {
+			for (size_t iX = 0; iX < nX; ++iX) {
+				Vertex vtx{ XMFLOAT3(float(x0 + iX * aDist[0]), float(y0 + iY * aDist[1]), float(z)), color };
+				if (useAnotherColor && iX % 2 == 1) {
+					vtx.rgba = color2;
+				}
+				pBuilder->AddVertex(vtx);
+			}
+		}
+	}
+
+	return pBuilder->GetVertexCount();
+}
+
+void MemoryMappedPointListEnumeratorSampleModel::PrepareVertexBuffer(D3D11Graphics::D3DGraphics& g)
+{
+	if (!m_pVertexBuffer) {
+		m_pVertexBuffer = g.CreateVertexBufferWithSize(
+			static_cast<UINT>(m_nVertexInUnit * sizeof(Vertex)), nullptr, true);
+	}
 }

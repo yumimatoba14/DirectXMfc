@@ -194,6 +194,7 @@
     <ClInclude Include="D3DModelPointList.h" />
     <ClInclude Include="D3DModelPointListEnumerator.h" />
     <ClInclude Include="D3DModelTriangleList.h" />
+    <ClInclude Include="D3DPointListBuilder.h" />
     <ClInclude Include="D3DShaderContext.h" />
     <ClInclude Include="D3DVertexBufferEnumerator.h" />
     <ClInclude Include="D3DViewOp.h" />
@@ -217,6 +218,7 @@
     <ClCompile Include="D3DModelPointList.cpp" />
     <ClCompile Include="D3DModelPointListEnumerator.cpp" />
     <ClCompile Include="D3DModelTriangleList.cpp" />
+    <ClCompile Include="D3DPointListBuilder.cpp" />
     <ClCompile Include="D3DShaderContext.cpp" />
     <ClCompile Include="D3DVertexBufferEnumerator.cpp" />
     <ClCompile Include="D3DViewOp.cpp" />

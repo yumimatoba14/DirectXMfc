@@ -22,8 +22,16 @@ struct D3DHandleCloser {
 		}
 	}
 };
+struct D3DFindFileCloser {
+	void operator ()(HANDLE h) noexcept {
+		if (h != INVALID_HANDLE_VALUE) {
+			::FindClose(h);
+		}
+	}
+};
 typedef std::unique_ptr<void, D3DHandleCloser> D3DUniqueHandle;
 typedef D3DUniqueHandle D3DUniqueFileHandle;
+typedef std::unique_ptr<void, D3DFindFileCloser> D3DUniqueFindFileHandle;
 
 // Include std::swap() since D3D11Graphics::swap() will be defined.
 // They oppose to call std::swap() without namespace.

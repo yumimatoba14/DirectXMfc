@@ -91,11 +91,15 @@ void CChildView::OnPaint()
 		m_pModel.reset(new D3DModelPointList()); m_graphics.SetPointSize(0.1);
 		m_pModel.reset(new PointListSampleModel()); m_graphics.SetPointSize(0.001);
 		m_pModel.reset(new PointListEnumeratorSampleModel()); m_graphics.SetPointSize(0.001);
+		CString filePath = _T("..\\PlainPointList.bin");
+		m_pModel.reset(new MemoryMappedPointListEnumeratorSampleModel(filePath)); m_graphics.SetPointSize(0.001);
 		m_viewOp.SetEyePoint(0, 0, 3);
 		UpdateShaderParam();
 	}
 
-	m_graphics.SetProgressiveViewMode(m_viewOp.IsMouseMoving(), !m_restartProgressiveView);
+	bool isProgressiveViewMode = m_viewOp.IsMouseMoving();
+	isProgressiveViewMode = true;
+	m_graphics.SetProgressiveViewMode(isProgressiveViewMode, !m_restartProgressiveView);
 
 	const bool isMouseMoveCullingEnabled = false;
 	if (isMouseMoveCullingEnabled) {
@@ -126,7 +130,7 @@ void CChildView::OnPaint()
 
 	bool isViewUpdaed = nDrawnPoint > 0;
 	if (m_graphics.IsProgressiveViewMode() && isViewUpdaed) {
-		UINT nEllapse = 1;
+		UINT nEllapse = 0;
 		if (m_progressiveViewTimerId == 0) {
 			m_progressiveViewTimerId = SetTimer(ID_PROGRESSIVE_VIEW_TIMER, nEllapse, nullptr);
 		}
