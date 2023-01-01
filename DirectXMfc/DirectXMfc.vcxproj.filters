@@ -81,6 +81,12 @@
     <ClInclude Include="D3DModelColorUtil.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
+    <ClInclude Include="D3DMemoryMappedFile.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DWin32File.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
     <ClInclude Include="D3DDrawingModel.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
@@ -129,6 +135,12 @@
       <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="D3DMappedSubResource.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DMemoryMappedFile.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DWin32File.cpp">
       <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="D3DDrawingModel.cpp">

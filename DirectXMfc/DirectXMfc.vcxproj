@@ -189,6 +189,7 @@
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="D3DGraphics3D.h" />
     <ClInclude Include="D3DMappedSubResource.h" />
+    <ClInclude Include="D3DMemoryMappedFile.h" />
     <ClInclude Include="D3DModelColorUtil.h" />
     <ClInclude Include="D3DModelPointList.h" />
     <ClInclude Include="D3DModelPointListEnumerator.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="D3DShaderContext.h" />
     <ClInclude Include="D3DVertexBufferEnumerator.h" />
     <ClInclude Include="D3DViewOp.h" />
+    <ClInclude Include="D3DWin32File.h" />
     <ClInclude Include="DirectXMfc.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
@@ -211,12 +213,14 @@
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="D3DGraphics3D.cpp" />
     <ClCompile Include="D3DMappedSubResource.cpp" />
+    <ClCompile Include="D3DMemoryMappedFile.cpp" />
     <ClCompile Include="D3DModelPointList.cpp" />
     <ClCompile Include="D3DModelPointListEnumerator.cpp" />
     <ClCompile Include="D3DModelTriangleList.cpp" />
     <ClCompile Include="D3DShaderContext.cpp" />
     <ClCompile Include="D3DVertexBufferEnumerator.cpp" />
     <ClCompile Include="D3DViewOp.cpp" />
+    <ClCompile Include="D3DWin32File.cpp" />
     <ClCompile Include="DirectXMfc.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="pch.cpp">
