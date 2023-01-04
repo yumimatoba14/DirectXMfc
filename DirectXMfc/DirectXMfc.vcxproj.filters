@@ -87,6 +87,12 @@
     <ClInclude Include="D3DPointListBuilder.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
+    <ClInclude Include="D3DVector.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DAabBox.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
     <ClInclude Include="D3DWin32File.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>

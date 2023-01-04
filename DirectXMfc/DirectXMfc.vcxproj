@@ -184,6 +184,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="D3D11Graphics.h" />
+    <ClInclude Include="D3DAabBox.h" />
     <ClInclude Include="D3DDrawingModel.h" />
     <ClInclude Include="D3DGraphics.h" />
     <ClInclude Include="ChildView.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="D3DModelTriangleList.h" />
     <ClInclude Include="D3DPointListBuilder.h" />
     <ClInclude Include="D3DShaderContext.h" />
+    <ClInclude Include="D3DVector.h" />
     <ClInclude Include="D3DVertexBufferEnumerator.h" />
     <ClInclude Include="D3DViewOp.h" />
     <ClInclude Include="D3DWin32File.h" />
