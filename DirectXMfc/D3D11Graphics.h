@@ -36,4 +36,6 @@ typedef std::unique_ptr<void, D3DFindFileCloser> D3DUniqueFindFileHandle;
 // Include std::swap() since D3D11Graphics::swap() will be defined.
 // They oppose to call std::swap() without namespace.
 using std::swap;
+
+const uint8_t D3D_FILE_HEADER_EXCLUSIVE_LOD_POINT_LIST = 1;
 } // namespace D3D11Graphics

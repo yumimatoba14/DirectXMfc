@@ -91,8 +91,8 @@ void CChildView::OnPaint()
 		m_pModel.reset(new D3DModelPointList()); m_graphics.SetPointSize(0.1);
 		m_pModel.reset(new PointListSampleModel()); m_graphics.SetPointSize(0.001);
 		m_pModel.reset(new PointListEnumeratorSampleModel()); m_graphics.SetPointSize(0.001);
-		CString filePath = _T("..\\PlainPointList.bin");
-		m_pModel.reset(new MemoryMappedPointListEnumeratorSampleModel(filePath)); m_graphics.SetPointSize(0.001);
+		CString filePath = _T("..\\ELodPointList.bin");
+		m_pModel.reset(new MemoryMappedPointListEnumeratorSampleModel(filePath, true)); m_graphics.SetPointSize(0.001);
 		m_viewOp.SetEyePoint(0, 0, 3);
 		UpdateShaderParam();
 	}

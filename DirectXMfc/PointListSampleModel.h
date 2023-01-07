@@ -3,6 +3,7 @@
 #include "D3DModelPointList.h"
 #include "D3DModelPointListEnumerator.h"
 #include "D3DMemoryMappedFile.h"
+#include "D3DExclusiveLodPointListHeader.h"
 
 class PointListSampleModel : public D3D11Graphics::D3DModelPointList
 {
@@ -50,7 +51,7 @@ private:
 	typedef DirectX::XMFLOAT3 XMFLOAT3;
 
 public:
-	explicit MemoryMappedPointListEnumeratorSampleModel(LPCTSTR pFilePath);
+	MemoryMappedPointListEnumeratorSampleModel(LPCTSTR pFilePath, bool useHeader);
 protected:
 	virtual void OnPreDraw(D3D11Graphics::D3DGraphics3D& g3D, D3D11Graphics::D3DGraphics& g);
 	virtual void OnPostDraw();
@@ -64,11 +65,14 @@ private:
 private:
 	size_t m_nVertexInUnit;
 	CString m_filePath;
+	bool m_isUseHeader;
 	D3D11Graphics::D3DMemoryMappedFile m_mmFile;
-	uint64_t m_nVertexInFile;
+	D3D11Graphics::D3DExclusiveLodPointListHeader m_pointListHeader;
+	uint64_t m_pointByteBegin = 0;
 	uint64_t m_nextVertex = 0;
 	uint64_t m_nMaxDrawnPointInFrame = 0;
 	uint64_t m_firstVertexInFrame = 0;
+	double m_drawingLength = 0;
 	D3D11Graphics::D3DBufferPtr m_pVertexBuffer;
 	D3D11Graphics::D3DGraphics* m_pGraphics = nullptr;
 };

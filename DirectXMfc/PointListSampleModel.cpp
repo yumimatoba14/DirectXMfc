@@ -1,9 +1,8 @@
 #include "pch.h"
 #include "PointListSampleModel.h"
 #include "D3DModelColorUtil.h"
-#include "D3DPointListBuilder.h"
+#include "D3DExclusiveLodPointListBuilder.h"
 #include "D3DWin32File.h"
-#include <memory>
 
 using namespace std;
 using namespace D3D11Graphics;
@@ -150,15 +149,16 @@ void PointListEnumeratorSampleModel::PrepareVertices(D3D11Graphics::D3DGraphics&
 
 ////////////////////////////////////////////////////////////////////////////////
 
-MemoryMappedPointListEnumeratorSampleModel::MemoryMappedPointListEnumeratorSampleModel(LPCTSTR pFilePath)
+MemoryMappedPointListEnumeratorSampleModel::MemoryMappedPointListEnumeratorSampleModel(LPCTSTR pFilePath, bool useHeader)
 {
 	m_nVertexInUnit = 1 << 20;
 	m_filePath = pFilePath ? pFilePath : _T("PlainPointCloud.bin");
+	m_isUseHeader = useHeader;
 }
 
 void MemoryMappedPointListEnumeratorSampleModel::OnPreDraw(D3D11Graphics::D3DGraphics3D& g3D, D3D11Graphics::D3DGraphics& g)
 {
-	m_nVertexInFile = PrepareFile();
+	uint64_t nVertexInFile = PrepareFile();
 	PrepareVertexBuffer(g);
 	P_ASSERT(m_pVertexBuffer);
 
@@ -166,11 +166,32 @@ void MemoryMappedPointListEnumeratorSampleModel::OnPreDraw(D3D11Graphics::D3DGra
 	if (!isOk) {
 		P_THROW_ERROR("Open");
 	}
+	if (!m_pointListHeader.IsInitialized()) {
+		if (m_isUseHeader) {
+			size_t dataSize = 32;
+			auto pSrc = m_mmFile.MapView(0, dataSize);
+			size_t nHeaderByte = D3DExclusiveLodPointListHeader::ReadHeaderSize(
+				pSrc.ToConstArray<char>(), dataSize);
+			if (dataSize < nHeaderByte) {
+				pSrc = m_mmFile.MapView(0, nHeaderByte);
+			}
+			m_pointListHeader.ReadFromBinaryData(pSrc.ToConstArray<char>(), nHeaderByte);
+			m_pointByteBegin = nHeaderByte;
+		} else {
+			m_pointListHeader.ClearLevelInfo();
+			m_pointListHeader.SetLevelInfo(0, nVertexInFile);
+			m_pointByteBegin = 0;
+		}
+	}
 
 	if (g3D.IsProgressiveViewMode()) {
 		m_nMaxDrawnPointInFrame = m_nVertexInUnit;
 		if (!g3D.IsProgressiveViewFollowingFrame()) {
 			m_nextVertex = 0;
+			m_drawingLength = m_pointListHeader.GetFirstLevelLength();
+		}
+		else {
+			m_drawingLength = m_pointListHeader.GetNextLevelLength(m_drawingLength);
 		}
 		m_firstVertexInFrame = m_nextVertex;
 	}
@@ -178,6 +199,7 @@ void MemoryMappedPointListEnumeratorSampleModel::OnPreDraw(D3D11Graphics::D3DGra
 		m_nextVertex = 0;
 		m_firstVertexInFrame = 0;
 		m_nMaxDrawnPointInFrame = 0;
+		m_drawingLength = 0;
 	}
 
 	m_pGraphics = &g;
@@ -192,9 +214,10 @@ void MemoryMappedPointListEnumeratorSampleModel::OnPostDraw()
 
 D3DVertexBufferEnumerator::VertexBufferData MemoryMappedPointListEnumeratorSampleModel::OnGetNext()
 {
+	uint64_t endVertexInLevel = m_pointListHeader.GetEnoughPointCount(m_drawingLength);
 	UINT nVertex = 0;
 
-	uint64_t endVertex = min(m_nextVertex + m_nVertexInUnit, m_nVertexInFile);
+	uint64_t endVertex = min(m_nextVertex + m_nVertexInUnit, endVertexInLevel);
 
 	nVertex = static_cast<UINT>(endVertex - m_nextVertex);
 
@@ -212,7 +235,7 @@ D3DVertexBufferEnumerator::VertexBufferData MemoryMappedPointListEnumeratorSampl
 	{
 		D3DMappedSubResource mappedMemory = m_pGraphics->MapDyamaicBuffer(m_pVertexBuffer);
 		UINT dataSize = nVertex * sizeof(Vertex);
-		auto pSrc = m_mmFile.MapView(m_nextVertex * sizeof(Vertex), dataSize);
+		auto pSrc = m_mmFile.MapView(m_pointByteBegin + m_nextVertex * sizeof(Vertex), dataSize);
 		mappedMemory.Write(pSrc.Get(), dataSize);
 	}
 
@@ -255,12 +278,22 @@ uint64_t MemoryMappedPointListEnumeratorSampleModel::PrepareFile()
 	WIN32_FIND_DATA findFileData;
 	D3DUniqueFindFileHandle hFind(::FindFirstFile(m_filePath, &findFileData));
 	if (hFind.get() != INVALID_HANDLE_VALUE) {
-		uint64_t fileSize = ToUInt64(findFileData.nFileSizeHigh, findFileData.nFileSizeLow);
-		return fileSize / sizeof(Vertex);
+		if (m_isUseHeader) {
+			return 0;		// This value is not used.
+		}
+		else {
+			uint64_t fileSize = ToUInt64(findFileData.nFileSizeHigh, findFileData.nFileSizeLow);
+			return fileSize / sizeof(Vertex);
+		}
 	}
 
-	unique_ptr<PlainPointListBuilder> pBuilder;
-	pBuilder = make_unique<PlainPointListBuilder>(m_filePath);
+	unique_ptr<D3DPointListBuilder> pBuilder;
+	if (this->m_isUseHeader) {
+		pBuilder = make_unique<D3DExclusiveLodPointListBuilder>(m_filePath, 0.01);
+	}
+	else {
+		pBuilder = make_unique<PlainPointListBuilder>(m_filePath);
+	}
 
 	const size_t nX = 1000;
 	const size_t nY = 1000;

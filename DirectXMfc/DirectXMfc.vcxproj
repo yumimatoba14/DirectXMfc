@@ -186,6 +186,9 @@
     <ClInclude Include="D3D11Graphics.h" />
     <ClInclude Include="D3DAabBox.h" />
     <ClInclude Include="D3DDrawingModel.h" />
+    <ClInclude Include="D3DExclusiveLodPointListBuilder.h" />
+    <ClInclude Include="D3DExclusiveLodPointListCreator.h" />
+    <ClInclude Include="D3DExclusiveLodPointListHeader.h" />
     <ClInclude Include="D3DGraphics.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="D3DGraphics3D.h" />
@@ -212,6 +215,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DDrawingModel.cpp" />
+    <ClCompile Include="D3DExclusiveLodPointListBuilder.cpp" />
+    <ClCompile Include="D3DExclusiveLodPointListCreator.cpp" />
+    <ClCompile Include="D3DExclusiveLodPointListHeader.cpp" />
     <ClCompile Include="D3DGraphics.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="D3DGraphics3D.cpp" />
