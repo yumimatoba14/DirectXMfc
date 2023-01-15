@@ -19,6 +19,12 @@ public:
 	typedef DirectX::XMFLOAT3 XMFLOAT3;
 	typedef DirectX::XMFLOAT4X4 XMFLOAT4X4;
 
+	// Remarks:
+	// XMLFLAT4x4 is row majar where float values are ordred like the following
+	// XMLFLAT4x4 = [  f0,  f1,  f2,  f3 ]
+	//              [  f4,  f5,  f6,  f7 ]
+	//              [  f8,  f9, f10, f11 ]
+	//              [ f12, f13, f14, f15 ]
 	struct ShaderParam {
 		XMFLOAT4X4 viewMatrix;
 		XMFLOAT4X4 projectionMatrix;
@@ -48,12 +54,20 @@ public:
 	bool IsProgressiveViewFollowingFrame() const { return m_isProgressiveViewFollowingFrame; }
 	void SetProgressiveViewMode(bool enableProgressiveView, bool isFollowingFrame = false);
 
+	XMFLOAT4X4 GetModelMatrix() const { return m_modelMatrix; }
+	void SetModelMatrix(const XMFLOAT4X4& matrix) { m_modelMatrix = matrix; OnModelToViewMatrixModified(); }
+
+	XMFLOAT4X4 GetViewMatrix() const { return m_viewMatrix; }
+	void SetViewMatrix(const XMFLOAT4X4& matrix) { m_viewMatrix = matrix; OnModelToViewMatrixModified(); }
+
+	XMFLOAT4X4 GetModelToViewMatrix() { return PrepareModelToViewMatrix(); }
+
 	/// <summary>
 	/// Get field-of-view angle of Y direction in degree.
 	/// </summary>
 	/// <returns></returns>
 	double GetFovAngleYInDegree() const { return m_fovAngleYDeg; }
-	void SetFovAngleYInDegree(double degree) { m_fovAngleYDeg = degree; }
+	void SetFovAngleYInDegree(double degree) { m_fovAngleYDeg = degree; OnShaderParamModified(); }
 
 	/// <summary>
 	/// Return size of point.
@@ -68,15 +82,7 @@ public:
 	/// Set a negative value to specify relative size in pixel.
 	/// </summary>
 	/// <param name="size"></param>
-	void SetPointSize(double size) { m_pointSize = size; }
-
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="viewMatrix">viewMatrix is used as the followin;
-	/// viewCoord = viewMatrix * modelCoord
-	/// </param>
-	void UpdateShaderParam(const XMFLOAT4X4& viewMatrix);
+	void SetPointSize(double size) { m_pointSize = size; OnShaderParamModified(); }
 
 	void DrawBegin();
 	void DrawEnd() { m_graphics.DrawEnd(); }
@@ -94,8 +100,36 @@ public:
 	int64_t GetDrawnPointCount() const { return m_graphics.GetDrawnPointCount(); }
 private:
 	void InitializeShaderContexts();
+
+	void OnModelToViewMatrixModified() {
+		m_isNeedToUpdateModelToViewMatrix = true;
+		OnShaderParamModified();
+	}
+	XMFLOAT4X4 PrepareModelToViewMatrix();
+
+	void OnShaderParamModified() { m_isNeedToUpdateShaderParameter = true; }
+	void PrepareShaderParam() {
+		if (m_isNeedToUpdateShaderParameter) {
+			UpdateShaderParam();
+		}
+	}
+	void UpdateShaderParam();
+
 private:
 	D3DGraphics m_graphics;
+	/// <summary>
+	/// (model point) = modelMatrix * (local point)
+	/// </summary>
+	XMFLOAT4X4 m_modelMatrix;
+	/// <summary>
+	/// A matrix to transform model coordinates to view coordinates.
+	/// (view point) = viewMatrix * (model point)
+	/// </summary>
+	XMFLOAT4X4 m_viewMatrix;
+	/// <summary>
+	/// A matrix of viewMatrix * modelMatrix.
+	/// </summary>
+	XMFLOAT4X4 m_modelToViewMatrix;
 	SIZE m_viewSize;
 	float m_viewNearZ;
 	float m_viewFarZ;
@@ -107,6 +141,8 @@ private:
 	bool m_isViewMoving = false;
 	bool m_isProgressiveViewMode = false;
 	bool m_isProgressiveViewFollowingFrame = false;
+	bool m_isNeedToUpdateModelToViewMatrix = true;
+	bool m_isNeedToUpdateShaderParameter = true;
 };
 
 }   // end of namespace D3D11Graphics

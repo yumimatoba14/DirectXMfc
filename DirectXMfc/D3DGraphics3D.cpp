@@ -13,6 +13,8 @@ using namespace D3D11Graphics;
 
 D3DGraphics3D::D3DGraphics3D() : m_viewSize{1,1}
 {
+	XMStoreFloat4x4(&m_modelMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&m_viewMatrix, XMMatrixIdentity());
 	m_viewNearZ = 0.1f;
 	m_viewFarZ = 100.f;
 	m_fovAngleYDeg = 45;
@@ -40,13 +42,13 @@ void D3DGraphics3D::SetProgressiveViewMode(bool enableProgressiveView, bool isFo
 	m_isProgressiveViewFollowingFrame = enableProgressiveView && isFollowingFrame;
 }
 
-void D3DGraphics3D::UpdateShaderParam(const XMFLOAT4X4& viewMatrix)
+void D3DGraphics3D::UpdateShaderParam()
 {
 	if (!m_graphics.HasDevice()) {
 		return;
 	}
 	ShaderParam shaderParam;
-	shaderParam.viewMatrix = viewMatrix;
+	shaderParam.viewMatrix = PrepareModelToViewMatrix();
 
 	double aspectRatio = 1;
 	if (0 < m_viewSize.cx && 0 < m_viewSize.cy) {
@@ -75,6 +77,8 @@ void D3DGraphics3D::UpdateShaderParam(const XMFLOAT4X4& viewMatrix)
 		shaderParam.pointSizeY = float(m_pointSize / tanY);
 	}
 	m_graphics.SetConstantBufferData(m_pShaderParamConstBuf, shaderParam);
+
+	m_isNeedToUpdateShaderParameter = false;
 }
 
 void D3DGraphics3D::DrawBegin()
@@ -89,6 +93,7 @@ void D3DGraphics3D::DrawPointList(D3DModelPointList* pModel)
 {
 	P_IS_TRUE(pModel != nullptr);
 	pModel->PreDraw(*this, m_graphics);
+	PrepareShaderParam();
 	m_graphics.DrawPointList(
 		m_pointListSc, pModel->m_pVertexBuffer,
 		sizeof(D3DModelPointList::Vertex), pModel->m_nVertex
@@ -100,6 +105,7 @@ void D3DGraphics3D::DrawPointListEnumerator(D3DModelPointListEnumerator* pModel)
 	P_IS_TRUE(pModel != nullptr);
 	pModel->PreDraw(*this, m_graphics);
 	if (pModel->HasCurrent()) {
+		PrepareShaderParam();
 		m_graphics.DrawPointLists(m_pointListSc, pModel, sizeof(D3DModelPointList::Vertex));
 	}
 	pModel->PostDraw();
@@ -109,6 +115,7 @@ void D3DGraphics3D::DrawTriangleList(D3DModelTriangleList* pModel)
 {
 	P_IS_TRUE(pModel != nullptr);
 	pModel->PreDraw(*this, m_graphics);
+	PrepareShaderParam();
 	m_graphics.DrawTriangleList(
 		m_triangleListSc, pModel->m_pVertexBuffer, pModel->m_pIndexBuffer,
 		sizeof(D3DModelTriangleList::Vertex), pModel->m_nIndex
@@ -119,7 +126,7 @@ void D3DGraphics3D::DrawTriangleList(D3DModelTriangleList* pModel)
 
 void D3DGraphics3D::ResizeBuffers(const SIZE& newSize)
 {
-	m_viewSize = newSize;
+	m_viewSize = newSize; OnShaderParamModified();
 	m_graphics.ResizeBuffers(newSize);
 }
 
@@ -155,4 +162,16 @@ void D3DGraphics3D::InitializeShaderContexts()
 		m_pShaderParamConstBuf,
 		m_triangleListSc.GetPixelShader()
 	);
+}
+
+XMFLOAT4X4 D3DGraphics3D::PrepareModelToViewMatrix()
+{
+	if (m_isNeedToUpdateModelToViewMatrix) {
+		XMStoreFloat4x4(
+			&m_modelToViewMatrix,
+			XMMatrixMultiply(XMLoadFloat4x4(&m_viewMatrix), XMLoadFloat4x4(&m_modelMatrix))
+		);
+		m_isNeedToUpdateModelToViewMatrix = false;
+	}
+	return m_modelToViewMatrix;
 }

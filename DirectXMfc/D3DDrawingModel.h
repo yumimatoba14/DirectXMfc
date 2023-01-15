@@ -1,4 +1,5 @@
 #pragma once
+#include "D3D11Graphics.h"
 #include "D3DGraphics3D.h"
 
 namespace D3D11Graphics {

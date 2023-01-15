@@ -2,8 +2,10 @@
 
 #include "D3DModelPointList.h"
 #include "D3DModelPointListEnumerator.h"
+#include "D3DDrawingModel.h"
 #include "D3DMemoryMappedFile.h"
 #include "D3DExclusiveLodPointListHeader.h"
+#include "D3DAabBox.h"
 
 class PointListSampleModel : public D3D11Graphics::D3DModelPointList
 {
@@ -52,6 +54,8 @@ private:
 
 public:
 	MemoryMappedPointListEnumeratorSampleModel(LPCTSTR pFilePath, bool useHeader);
+
+	void SetDrawingPrecision(double length) { m_drawingPrecision = length; }
 protected:
 	virtual void OnPreDraw(D3D11Graphics::D3DGraphics3D& g3D, D3D11Graphics::D3DGraphics& g);
 	virtual void OnPostDraw();
@@ -73,6 +77,32 @@ private:
 	uint64_t m_nMaxDrawnPointInFrame = 0;
 	uint64_t m_firstVertexInFrame = 0;
 	double m_drawingLength = 0;
+	double m_drawingPrecision = 0;
 	D3D11Graphics::D3DBufferPtr m_pVertexBuffer;
 	D3D11Graphics::D3DGraphics* m_pGraphics = nullptr;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+
+class MultiPointListSampleModel1 : public D3D11Graphics::D3DDrawingModel
+{
+public:
+	typedef std::unique_ptr<MemoryMappedPointListEnumeratorSampleModel> ContentPtr;
+	typedef D3D11Graphics::D3DVector3d D3DVector3d;
+	typedef D3D11Graphics::D3DAabBox3d D3DAabBox3d;
+	struct Instance {
+		ContentPtr pPointList;
+		D3DVector3d offset;
+		D3DAabBox3d aabb;
+	};
+public:
+	MultiPointListSampleModel1(LPCTSTR pFilePath);
+
+protected:
+	virtual void OnDrawTo(D3D11Graphics::D3DGraphics3D& g);
+
+private:
+	std::vector<Instance> m_instances;
+};
+
+////////////////////////////////////////////////////////////////////////////////

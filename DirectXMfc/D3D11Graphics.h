@@ -38,4 +38,7 @@ typedef std::unique_ptr<void, D3DFindFileCloser> D3DUniqueFindFileHandle;
 using std::swap;
 
 const uint8_t D3D_FILE_HEADER_EXCLUSIVE_LOD_POINT_LIST = 1;
+
+class D3DGraphics3D;
+
 } // namespace D3D11Graphics

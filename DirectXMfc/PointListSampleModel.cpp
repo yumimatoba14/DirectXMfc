@@ -191,7 +191,9 @@ void MemoryMappedPointListEnumeratorSampleModel::OnPreDraw(D3D11Graphics::D3DGra
 			m_drawingLength = m_pointListHeader.GetFirstLevelLength();
 		}
 		else {
-			m_drawingLength = m_pointListHeader.GetNextLevelLength(m_drawingLength);
+			if (m_drawingPrecision < m_drawingLength) {
+				m_drawingLength = m_pointListHeader.GetNextLevelLength(m_drawingLength);
+			}
 		}
 		m_firstVertexInFrame = m_nextVertex;
 	}
@@ -332,4 +334,64 @@ void MemoryMappedPointListEnumeratorSampleModel::PrepareVertexBuffer(D3D11Graphi
 		m_pVertexBuffer = g.CreateVertexBufferWithSize(
 			static_cast<UINT>(m_nVertexInUnit * sizeof(Vertex)), nullptr, true);
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+MultiPointListSampleModel1::MultiPointListSampleModel1(LPCTSTR pFilePath)
+{
+	D3DVector3d pointListSize = D3DVector::Make(1, 1, 1);
+	for (int i = 0; i < 5; ++i) {
+		Instance inst;
+		inst.pPointList = make_unique<MemoryMappedPointListEnumeratorSampleModel>(pFilePath, true);
+		inst.offset = D3DVector::Make<double>(double(i) * 2, 0, 0);
+		inst.aabb.Extend(inst.offset);
+		inst.aabb.Extend(inst.offset + pointListSize);
+		m_instances.push_back(move(inst));
+	}
+}
+
+static void SetPoinstListEnumerationPrecision(
+	const D3DGraphics3D::XMFLOAT4X4& modelToViewMatrix, const D3DAabBox3d& aabb,
+	MemoryMappedPointListEnumeratorSampleModel* pPointList
+)
+{
+	double minDistance = 1e128;
+	for (int i = 0; i < 8; ++i) {
+		D3DVector3d pnt;
+		pnt[0] = ((i & 0x01) == 0 ? aabb.GetMinPoint()[0] : aabb.GetMaxPoint()[0]);
+		pnt[1] = ((i & 0x02) == 0 ? aabb.GetMinPoint()[1] : aabb.GetMaxPoint()[1]);
+		pnt[2] = ((i & 0x04) == 0 ? aabb.GetMinPoint()[2] : aabb.GetMaxPoint()[2]);
+		double value = modelToViewMatrix.m[2][3];
+		for (int j = 0; j < 3; ++j) {
+			value += modelToViewMatrix.m[2][j] * pnt[j];
+		}
+		value *= -1;
+		if (value < minDistance) {
+			minDistance = value;
+			if (minDistance < 0) {
+				minDistance = 0;
+				break;
+			}
+		}
+	}
+	double precision = 0.001 * minDistance;  // TODO: fix me
+	pPointList->SetDrawingPrecision(precision);
+}
+
+void MultiPointListSampleModel1::OnDrawTo(D3D11Graphics::D3DGraphics3D& g)
+{
+	D3DGraphics3D::XMFLOAT4X4 orgModelMatrix = g.GetModelMatrix();
+	D3DGraphics3D::XMFLOAT4X4 modelToViewMatrix = g.GetModelToViewMatrix();
+	D3DGraphics3D::XMFLOAT4X4 localMtx = orgModelMatrix;
+	for (size_t iContent = 0; iContent < m_instances.size(); ++iContent) {
+		const Instance& inst = m_instances[iContent];
+		for (int i = 0; i < 3; ++i) {
+			localMtx(i, 3) = static_cast<float>(orgModelMatrix(i, 3) + inst.offset[i]);
+		}
+		g.SetModelMatrix(localMtx);
+		SetPoinstListEnumerationPrecision(modelToViewMatrix, inst.aabb, inst.pPointList.get());
+		g.DrawPointListEnumerator(inst.pPointList.get());
+	}
+	g.SetModelMatrix(orgModelMatrix);
 }
