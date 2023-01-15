@@ -100,6 +100,11 @@ void CChildView::OnPaint()
 	bool isProgressiveViewMode = m_viewOp.IsMouseMoving();
 	isProgressiveViewMode = true;
 	m_graphics.SetProgressiveViewMode(isProgressiveViewMode, !m_restartProgressiveView);
+	if (!isProgressiveViewMode || m_restartProgressiveView) {
+		m_nDrawnPoint = 0;
+		m_totalStartTickMiliSec = startTickMiliSec;
+		m_maxFrameTimeMiliSec = 0;
+	}
 
 	const bool isMouseMoveCullingEnabled = false;
 	if (isMouseMoveCullingEnabled) {
@@ -109,7 +114,6 @@ void CChildView::OnPaint()
 	m_pModel->DrawTo(m_graphics);
 	m_graphics.DrawEnd();
 
-	size_t nDrawnPoint = m_graphics.GetDrawnPointCount();
 	bool isSaveViewImage = false;
 	if (isSaveViewImage) {
 		static int fileNum = 0;
@@ -118,17 +122,26 @@ void CChildView::OnPaint()
 		m_graphics.SaveViewToFile(GUID_ContainerFormatPng, fileNameStream.str().c_str());
 	}
 
-	ULONGLONG miliSec = ::GetTickCount64() - startTickMiliSec;
+	uint64_t nDrawnPointInFrame = static_cast<uint64_t>(m_graphics.GetDrawnPointCount());
+	m_nDrawnPoint += nDrawnPointInFrame;
+
+	ULONGLONG endMiliSec = ::GetTickCount64();
+	ULONGLONG frameMiliSec = endMiliSec - startTickMiliSec;
+	m_maxFrameTimeMiliSec = max(m_maxFrameTimeMiliSec, frameMiliSec);
 	CString msg;
 	const int textHeight = 20;
 	int textY = 50;
-	msg.Format(_T("%lg msec"), double(miliSec));
+	msg.Format(_T("%lg msec"), double(frameMiliSec));
 	dc.TextOut(0, textY, msg);
 	textY += textHeight;
-	msg.Format(_T("%zu points drawn"), nDrawnPoint);
+	msg.Format(_T("%zu points drawn in a frame"), nDrawnPointInFrame);
+	dc.TextOut(0, textY, msg);
+	textY += textHeight;
+	msg.Format(_T("%I64u points drawn(%lg msec, max %lg msec/frame)"),
+		m_nDrawnPoint, double(endMiliSec - m_totalStartTickMiliSec), double(m_maxFrameTimeMiliSec));
 	dc.TextOut(0, textY, msg);
 
-	bool isViewUpdaed = nDrawnPoint > 0;
+	bool isViewUpdaed = nDrawnPointInFrame > 0;
 	if (m_graphics.IsProgressiveViewMode() && isViewUpdaed) {
 		UINT nEllapse = 0;
 		if (m_progressiveViewTimerId == 0) {

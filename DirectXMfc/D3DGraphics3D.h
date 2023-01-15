@@ -91,7 +91,7 @@ public:
 		return m_graphics.SaveViewToFile(targetFormat, targetFilePath);
 	}
 
-	size_t GetDrawnPointCount() const { return m_graphics.GetDrawnPointCount(); }
+	int64_t GetDrawnPointCount() const { return m_graphics.GetDrawnPointCount(); }
 private:
 	void InitializeShaderContexts();
 private:

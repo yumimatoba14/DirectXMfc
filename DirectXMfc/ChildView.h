@@ -41,6 +41,9 @@ private:
 	std::unique_ptr<D3D11Graphics::D3DDrawingModel> m_pModel;
 	UINT_PTR m_progressiveViewTimerId = 0;
 	bool m_restartProgressiveView = true;
+	uint64_t m_nDrawnPoint = 0;
+	ULONGLONG m_totalStartTickMiliSec = 0;
+	ULONGLONG m_maxFrameTimeMiliSec = 0;
 
 	// 生成された、メッセージ割り当て関数
 protected:

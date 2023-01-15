@@ -28,7 +28,7 @@ public:
 	/// return a number of points to be drawn by DrawPointList() or DrawPointLists().
 	/// </summary>
 	/// <returns>Number of points to be drawn after the last DrawBegin().</returns>
-	size_t GetDrawnPointCount() const { return m_nDrawnPoint; }
+	int64_t GetDrawnPointCount() const { return m_nDrawnPoint; }
 
 	// functions for Device.
 public:
@@ -103,7 +103,7 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_pRasterizerState;
 
-	size_t m_nDrawnPoint = 0;
+	int64_t m_nDrawnPoint = 0;
 };
 
 } // namespace D3D11Graphics
