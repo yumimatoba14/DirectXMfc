@@ -89,6 +89,7 @@ public:
 
 	void DrawPointList(D3DModelPointList* pModel);
 	void DrawPointListEnumerator(D3DModelPointListEnumerator* pModel);
+	void DrawPointArray(const PointListVertex aVertex[], int64_t nVertex);
 	void DrawTriangleList(D3DModelTriangleList* pModel);
 
 	void ResizeBuffers(const SIZE& newSize);
@@ -138,6 +139,8 @@ private:
 	D3DBufferPtr m_pShaderParamConstBuf;
 	D3DShaderContext m_triangleListSc;
 	D3DShaderContext m_pointListSc;
+	D3DBufferPtr m_pTempVertexBuffer;
+	UINT m_tempVertexBufferSize = (1 << 20) * sizeof(PointListVertex);
 	bool m_isViewMoving = false;
 	bool m_isProgressiveViewMode = false;
 	bool m_isProgressiveViewFollowingFrame = false;

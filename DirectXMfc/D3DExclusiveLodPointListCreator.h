@@ -11,6 +11,10 @@ class D3DExclusiveLodPointListCreator
 {
 public:
 	typedef D3DGraphics3D::PointListVertex Vertex;
+	class MmFileCreator {
+	public:
+		virtual D3DMemoryMappedFile Create(uint64_t fileSize) = 0;
+	};
 public:
 	D3DExclusiveLodPointListCreator(double latticeLength)
 		: m_latticeLength(latticeLength)
@@ -21,7 +25,18 @@ public:
 		const D3DAabBox3d& vertexAabb,
 		LPCTSTR pResultFilePath
 	);
+	int64_t CreateImage(
+		D3DWin32File& inputVertexFile, int64_t inputVertexFileByteBegin, int64_t nInputVertex,
+		const D3DAabBox3d& vertexAabb,
+		HANDLE hResultFile, int64_t resultFileByteBegin
+	);
 private:
+	int64_t CreateImageImpl(
+		D3DWin32File& inputVertexFile, int64_t inputVertexFileByteBegin, int64_t nInputVertex,
+		const D3DAabBox3d& vertexAabb,
+		MmFileCreator& resultFileCreator, int64_t resultFileByteBegin
+	);
+
 	static uint64_t Build1Level(
 		D3DWin32File& inputVertexFile, uint64_t nInputVertex,
 		const D3DAabBox3d& pointAabb, double latticeLength,

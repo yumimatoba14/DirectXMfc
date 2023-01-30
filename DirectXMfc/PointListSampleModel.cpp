@@ -2,9 +2,11 @@
 #include "PointListSampleModel.h"
 #include "D3DModelColorUtil.h"
 #include "D3DExclusiveLodPointListBuilder.h"
+#include "D3DPointBlockListBuilder.h"
 #include "D3DWin32File.h"
 
 using namespace std;
+using namespace DirectX;
 using namespace D3D11Graphics;
 using namespace D3D11Graphics::D3DModelColorUtil;
 
@@ -351,9 +353,8 @@ MultiPointListSampleModel1::MultiPointListSampleModel1(LPCTSTR pFilePath)
 	}
 }
 
-static void SetPoinstListEnumerationPrecision(
-	const D3DGraphics3D::XMFLOAT4X4& modelToViewMatrix, const D3DAabBox3d& aabb,
-	MemoryMappedPointListEnumeratorSampleModel* pPointList
+static double CalcPointListEnumerationPrecision(
+	const D3DGraphics3D::XMFLOAT4X4& modelToViewMatrix, const D3DAabBox3d& aabb
 )
 {
 	double minDistance = 1e128;
@@ -375,7 +376,15 @@ static void SetPoinstListEnumerationPrecision(
 			}
 		}
 	}
-	double precision = 0.001 * minDistance;  // TODO: fix me
+	return  0.001 * minDistance;  // TODO: fix me
+}
+
+static void SetPoinstListEnumerationPrecision(
+	const D3DGraphics3D::XMFLOAT4X4& modelToViewMatrix, const D3DAabBox3d& aabb,
+	MemoryMappedPointListEnumeratorSampleModel* pPointList
+)
+{
+	double precision = CalcPointListEnumerationPrecision(modelToViewMatrix, aabb);
 	pPointList->SetDrawingPrecision(precision);
 }
 
@@ -395,3 +404,86 @@ void MultiPointListSampleModel1::OnDrawTo(D3D11Graphics::D3DGraphics3D& g)
 	}
 	g.SetModelMatrix(orgModelMatrix);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+void MultiPointListSampleModel2::OnDrawTo(D3D11Graphics::D3DGraphics3D& g)
+{
+	PrepareBlockData();
+
+	D3DGraphics3D::XMFLOAT4X4 orgModelMatrix = g.GetModelMatrix();
+	D3DGraphics3D::XMFLOAT4X4 modelToViewMatrix = g.GetModelToViewMatrix();
+
+	size_t nBlock = m_instanceList.size();
+	for (size_t iBlock = 0; iBlock < nBlock; ++iBlock) {
+		const InstanceData& instance = m_instanceList[iBlock];
+		g.SetModelMatrix(instance.localToGlobalMatrix);
+		double precision = CalcPointListEnumerationPrecision(modelToViewMatrix, instance.aabb);
+		instance.pObject->SetDrawingPrecision(precision);
+		instance.pObject->DrawTo(g);
+	}
+}
+
+void MultiPointListSampleModel2::PrepareBlockData()
+{
+	if (!m_instanceList.empty()) {
+		return;
+	}
+
+	bool isOk = m_mmFile.OpenToRead(m_filePath);
+	if (!isOk) {
+		PrepareFile();
+
+		isOk = m_mmFile.OpenToRead(m_filePath);
+		P_IS_TRUE(isOk);
+	}
+
+	D3DPointBlockListHeader header;
+	header.ReadFromFile(m_mmFile);
+
+	auto& imageList = header.GetBlockList();
+
+	size_t nBlock = imageList.size();
+	m_instanceList.reserve(nBlock);
+	for (size_t iBlock = 0; iBlock < nBlock; ++iBlock) {
+		const auto& image = imageList[iBlock];
+		InstanceData instance;
+		instance.localToGlobalMatrix = image.localToGlobalMatrix;
+		instance.aabb.Extend(image.aAabbPoint[0]);
+		instance.aabb.Extend(image.aAabbPoint[1]);
+		instance.pObject = make_unique<D3DExclusiveLodPointListObject>(m_mmFile, image.firstBytePos);
+		m_instanceList.push_back(move(instance));
+	}
+}
+
+void MultiPointListSampleModel2::PrepareFile()
+{
+	auto pBuilder = make_unique<D3DPointBlockListBuilder>(m_filePath);
+
+	const size_t nX = 1000;
+	const size_t nY = 1000;
+	const size_t nZ = 1;
+	const double x0 = 0;
+	const double y0 = 0;
+	const double z0 = 0;
+	const double aDist[3] = { 1.0 / nX, 1.0 / nY, -1 };
+	const UINT aColor[3] = {
+		RgbaF(0.0f, 1.0f, 1.0f, 1),
+		RgbaF(0.0f, 0.0f, 1.0f, 1),
+		RgbaF(1.0f, 0.0f, 0.5f, 1)
+	};
+	for (size_t iZ = 0; iZ < nZ; ++iZ) {
+		const float z = float(z0 + iZ * aDist[2]);
+		const UINT color = aColor[iZ % 3];
+		for (size_t iY = 0; iY < nY; ++iY) {
+			for (size_t iX = 0; iX < nX; ++iX) {
+				D3DGraphics3D::PointListVertex vtx{ XMFLOAT3(float(x0 + iX * aDist[0]), float(y0 + iY * aDist[1]), float(z)), color };
+				pBuilder->AddVertex(vtx);
+			}
+		}
+	}
+
+	pBuilder->BuildPointBlockFile();
+}
+
+////////////////////////////////////////////////////////////////////////////////

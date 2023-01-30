@@ -111,6 +111,36 @@ void D3DGraphics3D::DrawPointListEnumerator(D3DModelPointListEnumerator* pModel)
 	pModel->PostDraw();
 }
 
+void D3DGraphics3D::DrawPointArray(const PointListVertex aVertex[], int64_t nVertex)
+{
+	P_IS_TRUE(aVertex != nullptr);
+	if (!m_pTempVertexBuffer) {
+		m_pTempVertexBuffer = m_graphics.CreateVertexBufferWithSize(
+			m_tempVertexBufferSize, nullptr, true
+		);
+	}
+
+	PrepareShaderParam();
+	const int64_t nVertexInBufUpperBound = m_tempVertexBufferSize / sizeof(PointListVertex);
+	int64_t nRemainingVertex = nVertex;
+	while (0 < nRemainingVertex) {
+		size_t nVertexInBuf = static_cast<size_t>(min(nVertexInBufUpperBound, nRemainingVertex));
+		P_ASSERT(int64_t(nVertexInBuf) <= nRemainingVertex);
+
+		{
+			D3DMappedSubResource mappedMemory = m_graphics.MapDyamaicBuffer(m_pTempVertexBuffer);
+			UINT dataSize = static_cast<UINT>(nVertexInBuf * sizeof(PointListVertex));
+			mappedMemory.Write(aVertex + (nVertex - nRemainingVertex), dataSize);
+		}
+		m_graphics.DrawPointList(
+			m_pointListSc, m_pTempVertexBuffer,
+			sizeof(PointListVertex), nVertexInBuf
+		);
+
+		nRemainingVertex -= nVertexInBuf;
+	}
+}
+
 void D3DGraphics3D::DrawTriangleList(D3DModelTriangleList* pModel)
 {
 	P_IS_TRUE(pModel != nullptr);

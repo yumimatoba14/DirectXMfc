@@ -6,5 +6,5 @@
 
 ## 使用ライブラリ
 * [DirectXTK](https://github.com/microsoft/DirectXTK) version 2023.3.30.1
-** [MIT license](https://github.com/microsoft/DirectXTK/blob/main/LICENSE)
+	* [MIT license](https://github.com/microsoft/DirectXTK/blob/main/LICENSE)
 

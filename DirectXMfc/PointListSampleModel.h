@@ -5,6 +5,8 @@
 #include "D3DDrawingModel.h"
 #include "D3DMemoryMappedFile.h"
 #include "D3DExclusiveLodPointListHeader.h"
+#include "D3DExclusiveLodPointListObject.h"
+#include "D3DPointBlockListHeader.h"
 #include "D3DAabBox.h"
 
 class PointListSampleModel : public D3D11Graphics::D3DModelPointList
@@ -103,6 +105,35 @@ protected:
 
 private:
 	std::vector<Instance> m_instances;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class MultiPointListSampleModel2 : public D3D11Graphics::D3DDrawingModel
+{
+public:
+	typedef D3D11Graphics::D3DAabBox3d D3DAabBox3d;
+	typedef DirectX::XMFLOAT4X4 XMFLOAT4X4;
+
+	struct InstanceData {
+		XMFLOAT4X4 localToGlobalMatrix;
+		D3DAabBox3d aabb;
+		D3D11Graphics::D3DExclusiveLodPointListObjectPtr pObject;
+	};
+public:
+	MultiPointListSampleModel2(LPCTSTR pFilePath) : m_filePath(pFilePath) {}
+
+protected:
+	virtual void OnDrawTo(D3D11Graphics::D3DGraphics3D& g);
+
+private:
+	void PrepareBlockData();
+	void PrepareFile();
+
+private:
+	CString m_filePath;
+	D3D11Graphics::D3DMemoryMappedFile m_mmFile;
+	std::vector<InstanceData> m_instanceList;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -3,6 +3,7 @@
 #include "D3DExclusiveLodPointListHeader.h"
 #include "D3DMemoryMappedFile.h"
 #include "D3DWin32File.h"
+#include "D3DWin32FileStreamBuf.h"
 
 using namespace std;
 using namespace DirectX;
@@ -98,6 +99,7 @@ namespace {
 		{
 			P_ASSERT(m_pFile && m_pFile->IsOpend());
 			m_pointBuffer.reserve(1024 * 4);
+			m_outputByteBegin = pFile->GetFilePointer();
 		}
 
 		~RemainingPointStorage()
@@ -122,7 +124,7 @@ namespace {
 			int64_t orgPos = m_pFile->GetFilePointer();
 			P_IS_TRUE((m_nWrittenPoint + m_pointBuffer.size()) * sizeof(Point) < (uint64_t)orgPos);
 
-			m_pFile->SetFilePointer(m_nWrittenPoint * sizeof(Point), FILE_BEGIN);
+			m_pFile->SetFilePointer(m_outputByteBegin + m_nWrittenPoint * sizeof(Point), FILE_BEGIN);
 			DWORD nWrittenByte = 0;
 			m_pFile->Write(m_pointBuffer.data(), m_pointBuffer.size() * sizeof(Point));
 			m_nWrittenPoint += m_pointBuffer.size();
@@ -134,6 +136,7 @@ namespace {
 		uint64_t GetPointCount() const { return m_nWrittenPoint + m_pointBuffer.size(); }
 
 	private:
+		int64_t m_outputByteBegin;
 		uint64_t m_nWrittenPoint;
 		vector<Point> m_pointBuffer;
 		D3DWin32File* m_pFile;
@@ -144,6 +147,74 @@ void D3DExclusiveLodPointListCreator::CreateImage(
 	D3DWin32File& inputVertexFile, int64_t nInputVertex,
 	const D3DAabBox3d& vertexAabb,
 	LPCTSTR pResultFilePath
+)
+{
+	class CreatorImpl : public MmFileCreator {
+	public:
+		explicit CreatorImpl(LPCTSTR pPath) : m_pResultFilePath(pPath) {}
+	protected:
+		virtual D3DMemoryMappedFile Create(uint64_t fileSize)
+		{
+			D3DMemoryMappedFile resultFile;
+			bool isOk = resultFile.OpenNewFile(m_pResultFilePath, fileSize);
+			if (!isOk) {
+				P_THROW_ERROR("OpenNewFile");
+			}
+			return resultFile;
+		}
+	private:
+		LPCTSTR m_pResultFilePath;
+	};
+
+	CreateImageImpl(
+		inputVertexFile, 0, nInputVertex, vertexAabb, CreatorImpl(pResultFilePath), 0
+	);
+}
+
+/// <summary>
+/// Create a point list image with exclusive LOD at the end of result file.
+/// </summary>
+/// <param name="inputVertexFile"></param>
+/// <param name="inputVertexFileByteBegin"></param>
+/// <param name="nInputVertex"></param>
+/// <param name="vertexAabb"></param>
+/// <param name="hResultFile"></param>
+/// <param name="resultFileByteBegin"></param>
+/// <returns>image byte size</returns>
+int64_t D3DExclusiveLodPointListCreator::CreateImage(
+	D3DWin32File& inputVertexFile, int64_t inputVertexFileByteBegin, int64_t nInputVertex,
+	const D3DAabBox3d& vertexAabb,
+	HANDLE hResultFile, int64_t resultFileByteBegin
+)
+{
+	class CreatorImpl : public MmFileCreator {
+	public:
+		CreatorImpl(HANDLE hFile, int64_t byteBegin)
+			: m_hResultFile(hFile), m_resultFileByteBegin(byteBegin)
+		{}
+	protected:
+		virtual D3DMemoryMappedFile Create(uint64_t fileSize)
+		{
+			D3DMemoryMappedFile resultFile;
+			resultFile.AttachFileToWrite(m_hResultFile, m_resultFileByteBegin + fileSize);
+			return resultFile;
+		}
+	private:
+		HANDLE m_hResultFile;
+		int64_t m_resultFileByteBegin;
+	};
+
+	// TODO : CreateImageImpl() modifies inputVertexFile. Fix it.
+	return CreateImageImpl(
+		inputVertexFile, inputVertexFileByteBegin, nInputVertex, vertexAabb,
+		CreatorImpl(hResultFile, resultFileByteBegin), resultFileByteBegin
+	);
+}
+
+int64_t D3DExclusiveLodPointListCreator::CreateImageImpl(
+	D3DWin32File& inputVertexFile, int64_t inputVertexFileByteBegin, int64_t nInputVertex,
+	const D3DAabBox3d& vertexAabb,
+	MmFileCreator& resultFileCreator, int64_t resultFileByteBegin
 )
 {
 	VectorToLatticeIndex toLatticeIndex(vertexAabb, m_latticeLength);
@@ -164,17 +235,13 @@ void D3DExclusiveLodPointListCreator::CreateImage(
 	size_t nHeaderByte = header.GetBinarySize();
 
 	const uint64_t nResultFileByte = nHeaderByte + nInputVertex * sizeof(Vertex);
-	D3DMemoryMappedFile resultFile;
-	bool isOk = resultFile.OpenNewFile(pResultFilePath, nResultFileByte);
-	if (!isOk) {
-		P_THROW_ERROR("OpenNewFile");
-	}
+	D3DMemoryMappedFile resultFile = resultFileCreator.Create(nResultFileByte);
 
 	uint64_t nCurrVertex = nInputVertex;
-	uint64_t resultFileBegin = nHeaderByte;
+	uint64_t resultFileBegin = resultFileByteBegin + nHeaderByte;
 	double latticeLength = header.GetFirstLevelLength();
 	for (int i = 0; i < nLevelOfLattice; ++i) {
-		inputVertexFile.SetFilePointer(0, FILE_BEGIN);
+		inputVertexFile.SetFilePointer(inputVertexFileByteBegin, FILE_BEGIN);
 		uint64_t nAddedLattice = Build1Level(
 			inputVertexFile, nCurrVertex, vertexAabb, latticeLength, resultFile, resultFileBegin
 		);
@@ -191,15 +258,18 @@ void D3DExclusiveLodPointListCreator::CreateImage(
 	}
 
 	if (0 < nCurrVertex) {
-		inputVertexFile.SetFilePointer(0, FILE_BEGIN);
-		CopyVertices(inputVertexFile, nCurrVertex, resultFile, resultFileBegin, nResultFileByte);
+		inputVertexFile.SetFilePointer(inputVertexFileByteBegin, FILE_BEGIN);
+		uint64_t resultFileEnd = resultFileByteBegin + nResultFileByte;
+		CopyVertices(inputVertexFile, nCurrVertex, resultFile, resultFileBegin, resultFileEnd);
 	}
 
 	P_IS_TRUE(header.GetBinarySize() == nHeaderByte);
 	{
-		auto pHeaderMemory = resultFile.MapView(0, nHeaderByte);
+		auto pHeaderMemory = resultFile.MapView(resultFileByteBegin, nHeaderByte);
 		header.WriteToBinaryData(pHeaderMemory.ToArray<char>(), nHeaderByte);
 	}
+
+	return (int64_t)nResultFileByte;
 }
 
 /// <summary>
@@ -230,9 +300,10 @@ uint64_t D3DExclusiveLodPointListCreator::Build1Level(
 	vector<LatticeInfo> latticeInfos;
 	latticeInfos.resize(nLattice);
 
+	D3DWin32FileStreamBuf inputVertexStreamBuf(inputVertexFile.GetHandle(), 1024 * 64);
 	for (uint64_t iVertex = 0; iVertex < nInputVertex; ++iVertex) {
 		Vertex vertex;
-		inputVertexFile.Read(&vertex, sizeof(Vertex));
+		inputVertexStreamBuf.Read(&vertex, sizeof(Vertex));
 
 		D3DVector3d vertexPos = vertex.pos;
 		XMINT3 vtxIndices = toLatticeIndex.GetIndices(vertexPos);

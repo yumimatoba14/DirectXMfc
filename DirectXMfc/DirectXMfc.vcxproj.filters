@@ -105,7 +105,19 @@
     <ClInclude Include="D3DDrawingModel.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
+    <ClInclude Include="D3DPointBlockListBuilder.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
     <ClInclude Include="D3DExclusiveLodPointListCreator.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DBinaryFormatter.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DPointBlockListHeader.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DExclusiveLodPointListObject.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
     <ClInclude Include="D3DWin32FileStreamBuf.h">
@@ -176,7 +188,19 @@
     <ClCompile Include="D3DDrawingModel.cpp">
       <Filter>D3DGraphics</Filter>
     </ClCompile>
+    <ClCompile Include="D3DPointBlockListBuilder.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
     <ClCompile Include="D3DExclusiveLodPointListCreator.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DBinaryFormatter.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DPointBlockListHeader.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DExclusiveLodPointListObject.cpp">
       <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="D3DWin32FileStreamBuf.cpp">
