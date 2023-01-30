@@ -108,6 +108,9 @@
     <ClInclude Include="D3DExclusiveLodPointListCreator.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
+    <ClInclude Include="D3DWin32FileStreamBuf.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectXMfc.cpp">
@@ -174,6 +177,9 @@
       <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="D3DExclusiveLodPointListCreator.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DWin32FileStreamBuf.cpp">
       <Filter>D3DGraphics</Filter>
     </ClCompile>
   </ItemGroup>

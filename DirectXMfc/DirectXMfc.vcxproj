@@ -204,6 +204,7 @@
     <ClInclude Include="D3DVertexBufferEnumerator.h" />
     <ClInclude Include="D3DViewOp.h" />
     <ClInclude Include="D3DWin32File.h" />
+    <ClInclude Include="D3DWin32FileStreamBuf.h" />
     <ClInclude Include="DirectXMfc.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
@@ -231,6 +232,7 @@
     <ClCompile Include="D3DVertexBufferEnumerator.cpp" />
     <ClCompile Include="D3DViewOp.cpp" />
     <ClCompile Include="D3DWin32File.cpp" />
+    <ClCompile Include="D3DWin32FileStreamBuf.cpp" />
     <ClCompile Include="DirectXMfc.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="pch.cpp">
