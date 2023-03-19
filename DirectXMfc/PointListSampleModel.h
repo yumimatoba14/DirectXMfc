@@ -127,6 +127,7 @@ protected:
 	virtual void OnDrawTo(D3D11Graphics::D3DGraphics3D& g);
 
 private:
+	void UpdateDrawnInstances(D3D11Graphics::D3DGraphics3D& g);
 	void PrepareBlockData();
 	void PrepareFile();
 
@@ -134,6 +135,7 @@ private:
 	CString m_filePath;
 	D3D11Graphics::D3DMemoryMappedFile m_mmFile;
 	std::vector<InstanceData> m_instanceList;
+	std::vector<size_t> m_drawnInstanceIndices;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

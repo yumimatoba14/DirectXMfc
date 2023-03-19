@@ -18,6 +18,7 @@ class D3DGraphics3D
 public:
 	typedef DirectX::XMFLOAT3 XMFLOAT3;
 	typedef DirectX::XMFLOAT4X4 XMFLOAT4X4;
+	typedef DirectX::XMMATRIX XMMATRIX;
 
 	// Remarks:
 	// XMLFLAT4x4 is row majar where float values are ordred like the following
@@ -61,6 +62,8 @@ public:
 	void SetViewMatrix(const XMFLOAT4X4& matrix) { m_viewMatrix = matrix; OnModelToViewMatrixModified(); }
 
 	XMFLOAT4X4 GetModelToViewMatrix() { return PrepareModelToViewMatrix(); }
+
+	XMMATRIX GetModelToProjectionMatrix();
 
 	/// <summary>
 	/// Get field-of-view angle of Y direction in degree.
@@ -107,6 +110,8 @@ private:
 		OnShaderParamModified();
 	}
 	XMFLOAT4X4 PrepareModelToViewMatrix();
+	double GetAspectRatio() const;
+	XMMATRIX MakeProjectionMatrix(double aspectRatio) const;
 
 	void OnShaderParamModified() { m_isNeedToUpdateShaderParameter = true; }
 	void PrepareShaderParam() {

@@ -42,6 +42,18 @@ void D3DGraphics3D::SetProgressiveViewMode(bool enableProgressiveView, bool isFo
 	m_isProgressiveViewFollowingFrame = enableProgressiveView && isFollowingFrame;
 }
 
+XMMATRIX D3DGraphics3D::GetModelToProjectionMatrix()
+{
+	XMFLOAT4X4 modelToViewMatrix = PrepareModelToViewMatrix();
+	double aspectRatio = GetAspectRatio();
+	return XMMatrixMultiply(
+		XMMatrixTranspose(XMLoadFloat4x4(&modelToViewMatrix)),
+		MakeProjectionMatrix(aspectRatio)
+	);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void D3DGraphics3D::UpdateShaderParam()
 {
 	if (!m_graphics.HasDevice()) {
@@ -50,13 +62,8 @@ void D3DGraphics3D::UpdateShaderParam()
 	ShaderParam shaderParam;
 	shaderParam.viewMatrix = PrepareModelToViewMatrix();
 
-	double aspectRatio = 1;
-	if (0 < m_viewSize.cx && 0 < m_viewSize.cy) {
-		aspectRatio = double(m_viewSize.cx) / m_viewSize.cy;
-	}
-	XMStoreFloat4x4(&shaderParam.projectionMatrix, XMMatrixTranspose(
-		XMMatrixPerspectiveFovRH(XMConvertToRadians((float)m_fovAngleYDeg), (float)aspectRatio, m_viewNearZ, m_viewFarZ)
-	));
+	double aspectRatio = GetAspectRatio();
+	XMStoreFloat4x4(&shaderParam.projectionMatrix, XMMatrixTranspose(MakeProjectionMatrix(aspectRatio)));
 
 	// view coordinates is normalized as [-1, 1]. So half size is used.
 	shaderParam.pixelSizeX = (0 < m_viewSize.cx ? 2.0f / m_viewSize.cx : 1);
@@ -204,4 +211,18 @@ XMFLOAT4X4 D3DGraphics3D::PrepareModelToViewMatrix()
 		m_isNeedToUpdateModelToViewMatrix = false;
 	}
 	return m_modelToViewMatrix;
+}
+
+double D3DGraphics3D::GetAspectRatio() const
+{
+	double aspectRatio = 1;
+	if (0 < m_viewSize.cx && 0 < m_viewSize.cy) {
+		aspectRatio = double(m_viewSize.cx) / m_viewSize.cy;
+	}
+	return aspectRatio;
+}
+
+XMMATRIX D3DGraphics3D::MakeProjectionMatrix(double aspectRatio) const
+{
+	return XMMatrixPerspectiveFovRH(XMConvertToRadians((float)m_fovAngleYDeg), (float)aspectRatio, m_viewNearZ, m_viewFarZ);
 }

@@ -411,16 +411,95 @@ void MultiPointListSampleModel2::OnDrawTo(D3D11Graphics::D3DGraphics3D& g)
 {
 	PrepareBlockData();
 
-	D3DGraphics3D::XMFLOAT4X4 orgModelMatrix = g.GetModelMatrix();
-	D3DGraphics3D::XMFLOAT4X4 modelToViewMatrix = g.GetModelToViewMatrix();
+	if (!g.IsProgressiveViewFollowingFrame()) {
+		UpdateDrawnInstances(g);
 
-	size_t nBlock = m_instanceList.size();
-	for (size_t iBlock = 0; iBlock < nBlock; ++iBlock) {
+		D3DGraphics3D::XMFLOAT4X4 modelToViewMatrix = g.GetModelToViewMatrix();
+
+		for (auto iBlock : m_drawnInstanceIndices) {
+			const InstanceData& instance = m_instanceList[iBlock];
+			g.SetModelMatrix(instance.localToGlobalMatrix);
+			double precision = CalcPointListEnumerationPrecision(modelToViewMatrix, instance.aabb);
+			instance.pObject->SetDrawingPrecision(precision);
+			instance.pObject->PrepareFirstDraw(g);
+		}
+	}
+	bool isProgressiveMode = g.IsProgressiveViewMode();
+
+	const size_t maxDrawnPointCountPerFrame = 2 << 20;
+	for (auto iBlock : m_drawnInstanceIndices) {
 		const InstanceData& instance = m_instanceList[iBlock];
 		g.SetModelMatrix(instance.localToGlobalMatrix);
-		double precision = CalcPointListEnumerationPrecision(modelToViewMatrix, instance.aabb);
-		instance.pObject->SetDrawingPrecision(precision);
 		instance.pObject->DrawTo(g);
+		if (isProgressiveMode && maxDrawnPointCountPerFrame < g.GetDrawnPointCount()) {
+			break;
+		}
+	}
+}
+
+static bool CalcBoxDistanceInProjection(const XMMATRIX& modelProjMatrix, const D3DAabBox3d& aabb, double* pDistance)
+{
+	const float tolZero = 1e-6f;
+	*pDistance = 0;
+	D3DAabBox3d projAabb;
+	bool hasNegativeW = false;
+	for (int i = 0; i < 8; ++i) {
+		float coord[3];
+		coord[0] = static_cast<float>((i & 0x01) ? aabb.GetMaxPoint()[0] : aabb.GetMinPoint()[0]);
+		coord[1] = static_cast<float>((i & 0x02) ? aabb.GetMaxPoint()[1] : aabb.GetMinPoint()[1]);
+		coord[2] = static_cast<float>((i & 0x04) ? aabb.GetMaxPoint()[2] : aabb.GetMinPoint()[2]);
+
+		XMVECTOR moelVec = XMVectorSet(coord[0], coord[1], coord[2], 1);
+		XMVECTOR projVecHomo = XMVector4Transform(moelVec, modelProjMatrix);
+		float w = XMVectorGetW(projVecHomo);
+		// w = -zv where zv is z in view coordinate system. Negative z shall be drawn in RH system.
+		if (w < tolZero) {
+			P_ASSERT(XMVectorGetZ(projVecHomo) < 0);
+			w = tolZero;
+			hasNegativeW = true;
+		}
+		double invW = 1.0 / w;
+		D3DVector3d projVec;
+		projVec[0] = XMVectorGetX(projVecHomo) * invW;
+		projVec[1] = XMVectorGetY(projVecHomo) * invW;
+		projVec[2] = XMVectorGetZ(projVecHomo) * invW;
+		projAabb.Extend(projVec);
+	}
+
+	D3DVector3d minPoint = projAabb.GetMinPoint();
+	D3DVector3d maxPoint = projAabb.GetMaxPoint();
+	for (int i = 0; i < 2; ++i) {
+		if (maxPoint[i] < -1 || 1 < minPoint[i]) {
+			return false;
+		}
+	}
+	if (maxPoint[2] < 0 || 1 < minPoint[2]) {
+		return false;
+	}
+	if (!hasNegativeW && 0 < minPoint[2]) {
+		*pDistance = minPoint[2];
+	}
+	return true;
+}
+
+void MultiPointListSampleModel2::UpdateDrawnInstances(D3D11Graphics::D3DGraphics3D& g)
+{
+	m_drawnInstanceIndices.clear();
+
+	D3DGraphics3D::XMMATRIX modelProjMatrix = g.GetModelToProjectionMatrix();
+
+	size_t nBlock = m_instanceList.size();
+	multimap<double, size_t> distanceToBlock;
+	for (size_t iBlock = 0; iBlock < nBlock; ++iBlock) {
+		double distance = 0;
+		bool isVisible = CalcBoxDistanceInProjection(modelProjMatrix, m_instanceList[iBlock].aabb, &distance);
+		if (!isVisible) {
+			continue;
+		}
+		distanceToBlock.emplace(distance, iBlock);
+	}
+	for (auto distToIndex : distanceToBlock) {
+		m_drawnInstanceIndices.push_back(distToIndex.second);
 	}
 }
 
