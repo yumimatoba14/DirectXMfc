@@ -541,23 +541,28 @@ void MultiPointListSampleModel2::PrepareFile()
 
 	const size_t nX = 1000;
 	const size_t nY = 1000;
-	const size_t nZ = 1;
+	const size_t nZ = 100;
+	const size_t nX2 = 10;
 	const double x0 = 0;
 	const double y0 = 0;
 	const double z0 = 0;
-	const double aDist[3] = { 1.0 / nX, 1.0 / nY, -1 };
+	const double aDist[4] = { 1.0 / nX, 1.0 / nY, -1, 2 };
 	const UINT aColor[3] = {
 		RgbaF(0.0f, 1.0f, 1.0f, 1),
 		RgbaF(0.0f, 0.0f, 1.0f, 1),
 		RgbaF(1.0f, 0.0f, 0.5f, 1)
 	};
-	for (size_t iZ = 0; iZ < nZ; ++iZ) {
-		const float z = float(z0 + iZ * aDist[2]);
-		const UINT color = aColor[iZ % 3];
-		for (size_t iY = 0; iY < nY; ++iY) {
-			for (size_t iX = 0; iX < nX; ++iX) {
-				D3DGraphics3D::PointListVertex vtx{ XMFLOAT3(float(x0 + iX * aDist[0]), float(y0 + iY * aDist[1]), float(z)), color };
-				pBuilder->AddVertex(vtx);
+	for (size_t iX2 = 0; iX2 < nX2; ++iX2) {
+		double x2 = aDist[3] * iX2;
+		for (size_t iZ = 0; iZ < nZ; ++iZ) {
+			const float z = float(z0 + iZ * aDist[2]);
+			const UINT color = aColor[iZ % 3];
+			for (size_t iY = 0; iY < nY; ++iY) {
+				for (size_t iX = 0; iX < nX; ++iX) {
+					double x = x2 + x0 + iX * aDist[0];
+					D3DGraphics3D::PointListVertex vtx{ XMFLOAT3(float(x), float(y0 + iY * aDist[1]), float(z)), color };
+					pBuilder->AddVertex(vtx);
+				}
 			}
 		}
 	}
