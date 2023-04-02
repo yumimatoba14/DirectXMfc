@@ -6,6 +6,7 @@
 #include "framework.h"
 #include <DirectXMath.h>
 #include <vector>
+#include <sstream>
 #include "DirectXMfc.h"
 #include "ChildView.h"
 #include "D3DModelPointList.h"
@@ -105,6 +106,13 @@ void CChildView::OnPaint()
 	m_graphics.DrawEnd();
 
 	size_t nDrawnPoint = m_graphics.GetDrawnPointCount();
+	bool isSaveViewImage = false;
+	if (isSaveViewImage) {
+		static int fileNum = 0;
+		wstringstream fileNameStream;
+		fileNameStream << "./ViewImage" << (fileNum++) << ".png";
+		m_graphics.SaveViewToFile(GUID_ContainerFormatPng, fileNameStream.str().c_str());
+	}
 
 	ULONGLONG miliSec = ::GetTickCount64() - startTickMiliSec;
 	CString msg;

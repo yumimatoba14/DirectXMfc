@@ -82,6 +82,7 @@ public:
 	void DrawEnd();
 
 	void ResizeBuffers(const CSize& newSize);
+	bool SaveViewToFile(REFGUID targetFormat, LPCTSTR targetFilePath);
 
 private:
 	void PrepareDepthStencilView();

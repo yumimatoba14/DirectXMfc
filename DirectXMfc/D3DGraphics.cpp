@@ -2,6 +2,7 @@
 #include "D3DGraphics.h"
 #include <exception>
 #include "D3DVertexBufferEnumerator.h"
+#include "ScreenGrab.h"
 
 using namespace Microsoft::WRL;
 using namespace std;
@@ -515,6 +516,31 @@ void D3DGraphics::ResizeBuffers(const CSize& newSize)
 		m_viewport.Height = float(newSize.cy);
 	}
 	P_NOEXCEPT_END;
+}
+
+/// <summary>
+/// Save view image to file.
+/// </summary>
+/// <param name="targetFormat">GUID_ContainerFormatPng for example.</param>
+/// <param name="targetFilePath"></param>
+/// <returns>false if failed.</returns>
+/// This function may throw an exception, also.
+bool D3DGraphics::SaveViewToFile(REFGUID targetFormat, LPCTSTR targetFilePath)
+{
+	P_IS_TRUE(targetFilePath != nullptr);
+
+	ID3DResourcePtr pResource;
+	m_pRenderTargetView->GetResource(&pResource);
+	P_IS_TRUE(pResource);
+
+	HRESULT hr = DirectX::SaveWICTextureToFile(
+		m_pDC.Get(), pResource.Get(), targetFormat, CT2W(targetFilePath)
+	);
+	if (FAILED(hr)) {
+		P_IGNORE_ERROR("DirectX::SaveWICTextureToFile");
+		return false;
+	}
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
