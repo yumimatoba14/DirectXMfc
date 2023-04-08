@@ -17,6 +17,9 @@ public:
 	void SetMaxPointCountDrawnPerFrame(int64_t nPoint) { m_maxPointCountDrawnPerFrame = nPoint; }
 
 	void PrepareFirstDraw(D3DGraphics3D& g);
+	bool IsDrawingEnded() const { return m_drawingVertexEnd <= m_nextVertex; }
+
+	void DrawAfterPreparation(D3DGraphics3D& g);
 protected:
 	virtual void OnDrawTo(D3DGraphics3D& g);
 
@@ -34,6 +37,7 @@ private:
 	// Work variables used in OnDrawTo().
 private:
 	double m_precisionForFrame = 0;
+	uint64_t m_drawingVertexEnd = 0;
 	uint64_t m_nextVertex = 0;
 };
 

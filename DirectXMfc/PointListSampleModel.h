@@ -130,6 +130,9 @@ protected:
 
 private:
 	void UpdateDrawnInstances(D3D11Graphics::D3DGraphics3D& g);
+	void DrawInstancesInProgressiveMode(
+		D3D11Graphics::D3DGraphics3D& g, int64_t maxDrawnPointCountPerFrame
+	);
 	void PrepareFile();
 
 private:

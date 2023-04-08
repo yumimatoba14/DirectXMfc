@@ -410,29 +410,57 @@ void MultiPointListSampleModel1::OnDrawTo(D3D11Graphics::D3DGraphics3D& g)
 void MultiPointListSampleModel2::OnDrawTo(D3D11Graphics::D3DGraphics3D& g)
 {
 	PrepareBlockData();
+	const int64_t maxDrawnPointCountPerFrame = 1 << 20;
 
 	if (!g.IsProgressiveViewFollowingFrame()) {
 		UpdateDrawnInstances(g);
 
 		D3DGraphics3D::XMFLOAT4X4 modelToViewMatrix = g.GetModelToViewMatrix();
+		size_t nDrawnInst = m_drawnInstanceIndices.size();
+		int64_t maxPointPerInst = 1 << 20;
+		const int numInstMax = 3;
+		if (0 < nDrawnInst && nDrawnInst < numInstMax) {
+			if (nDrawnInst == 1) {
+				maxPointPerInst = maxDrawnPointCountPerFrame;
+			}
+			else {
+				maxPointPerInst = maxDrawnPointCountPerFrame / nDrawnInst;
+			}
+		}
+		else {
+			maxPointPerInst = maxDrawnPointCountPerFrame / numInstMax;
+		}
 
 		for (auto iBlock : m_drawnInstanceIndices) {
 			const InstanceData& instance = m_instanceList[iBlock];
 			g.SetModelMatrix(instance.localToGlobalMatrix);
 			double precision = CalcPointListEnumerationPrecision(modelToViewMatrix, instance.aabb);
 			instance.pObject->SetDrawingPrecision(precision);
+			instance.pObject->SetMaxPointCountDrawnPerFrame(maxPointPerInst);
 			instance.pObject->PrepareFirstDraw(g);
 		}
 	}
 	bool isProgressiveMode = g.IsProgressiveViewMode();
 
-	const size_t maxDrawnPointCountPerFrame = 2 << 20;
-	for (auto iBlock : m_drawnInstanceIndices) {
-		const InstanceData& instance = m_instanceList[iBlock];
-		g.SetModelMatrix(instance.localToGlobalMatrix);
-		instance.pObject->DrawTo(g);
-		if (isProgressiveMode && maxDrawnPointCountPerFrame < g.GetDrawnPointCount()) {
-			break;
+	if (isProgressiveMode) {
+#if 1
+		DrawInstancesInProgressiveMode(g, maxDrawnPointCountPerFrame);
+#else
+		for (auto iBlock : m_drawnInstanceIndices) {
+			const InstanceData& instance = m_instanceList[iBlock];
+			g.SetModelMatrix(instance.localToGlobalMatrix);
+			instance.pObject->DrawTo(g);
+			if (isProgressiveMode && maxDrawnPointCountPerFrame < g.GetDrawnPointCount()) {
+				break;
+			}
+		}
+#endif
+	}
+	else {
+		for (auto iBlock : m_drawnInstanceIndices) {
+			const InstanceData& instance = m_instanceList[iBlock];
+			g.SetModelMatrix(instance.localToGlobalMatrix);
+			instance.pObject->DrawTo(g);
 		}
 	}
 }
@@ -502,6 +530,36 @@ void MultiPointListSampleModel2::UpdateDrawnInstances(D3D11Graphics::D3DGraphics
 	}
 	for (auto distToIndex : distanceToBlock) {
 		m_drawnInstanceIndices.push_back(distToIndex.second);
+	}
+}
+
+void MultiPointListSampleModel2::DrawInstancesInProgressiveMode(
+	D3D11Graphics::D3DGraphics3D& g, int64_t maxDrawnPointCountPerFrame
+)
+{
+	size_t numDrawingInstance = 0;
+	for (auto iBlock : m_drawnInstanceIndices) {
+		const InstanceData& instance = m_instanceList[iBlock];
+		if (!instance.pObject->IsDrawingEnded()) {
+			++numDrawingInstance;
+		}
+	}
+
+	while (0 < numDrawingInstance) {
+		for (auto iBlock : m_drawnInstanceIndices) {
+			const InstanceData& instance = m_instanceList[iBlock];
+			if (instance.pObject->IsDrawingEnded()) {
+				continue;
+			}
+			g.SetModelMatrix(instance.localToGlobalMatrix);
+			instance.pObject->DrawAfterPreparation(g);
+			if (maxDrawnPointCountPerFrame < g.GetDrawnPointCount()) {
+				return;
+			}
+			if (instance.pObject->IsDrawingEnded()) {
+				--numDrawingInstance;
+			}
+		}
 	}
 }
 

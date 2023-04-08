@@ -34,20 +34,16 @@ void D3DExclusiveLodPointListObject::PrepareFirstDraw(D3DGraphics3D& g)
 	}
 
 	m_nextVertex = 0;
+	m_drawingVertexEnd = m_pointListHeader.GetEnoughPointCount(m_drawingPrecision);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-void D3DExclusiveLodPointListObject::OnDrawTo(D3DGraphics3D& g)
+/// This function can be called sometimes in a frame.
+/// PrepareFirstDraw() must have been called beforehand to restart drawing from the begining.
+void D3DExclusiveLodPointListObject::DrawAfterPreparation(D3DGraphics3D& g)
 {
-	if (!m_pointListHeader.IsInitialized()) {
-		PrepareFirstDraw(g);
-	}
+	P_ASSERT(m_pointListHeader.IsInitialized());
 
 	if (g.IsProgressiveViewMode()) {
-		if (!g.IsProgressiveViewFollowingFrame()) {
-			m_nextVertex = 0;
-		}
 		if (m_nextVertex == 0) {
 			m_precisionForFrame = m_pointListHeader.GetFirstLevelLength();
 		}
@@ -56,14 +52,18 @@ void D3DExclusiveLodPointListObject::OnDrawTo(D3DGraphics3D& g)
 				// Delay drawing the next level and prefer to draw other objects.
 				uint64_t endVertexInLevel = m_pointListHeader.GetEnoughPointCount(m_precisionForFrame);
 				if (endVertexInLevel <= m_nextVertex) {
+#if 1
 					// drawing the next level.
 					m_precisionForFrame = m_pointListHeader.GetNextLevelLength(m_precisionForFrame);
+#else
+					// draw the required level.
+					m_precisionForFrame = m_drawingPrecision;
+#endif
 				}
 			}
 		}
 	}
 	else {
-		m_nextVertex = 0;
 		m_precisionForFrame = m_drawingPrecision;
 	}
 	// m_precisionForFrame has been decided.
@@ -82,6 +82,17 @@ void D3DExclusiveLodPointListObject::OnDrawTo(D3DGraphics3D& g)
 
 		m_nextVertex = endVertex;
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void D3DExclusiveLodPointListObject::OnDrawTo(D3DGraphics3D& g)
+{
+	if(!m_pointListHeader.IsInitialized() || !g.IsProgressiveViewFollowingFrame()) {
+		PrepareFirstDraw(g);
+	}
+
+	DrawAfterPreparation(g);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
