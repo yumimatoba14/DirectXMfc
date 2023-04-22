@@ -5,8 +5,8 @@
 #include "pch.h"
 #include "framework.h"
 #include "DirectXMfc.h"
-
 #include "MainFrm.h"
+#include "D3DPts2PointBlockListConverter.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -19,6 +19,7 @@ IMPLEMENT_DYNAMIC(CMainFrame, CFrameWnd)
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_WM_CREATE()
 	ON_WM_SETFOCUS()
+	ON_COMMAND(ID_OPEN_FILE, &CMainFrame::OnOpenFile)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -64,7 +65,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		TRACE0("ステータス バーの作成に失敗しました。\n");
 		return -1;      // 作成できない場合
 	}
-	m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+	m_wndStatusBar.SetIndicators(indicators, sizeof(indicators) / sizeof(UINT));
 
 	// TODO: ツール バーをドッキング可能にしない場合は、これらの 3 行を削除してください。
 	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
@@ -77,7 +78,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
-	if( !CFrameWnd::PreCreateWindow(cs) )
+	if (!CFrameWnd::PreCreateWindow(cs))
 		return FALSE;
 	// TODO: この位置で CREATESTRUCT cs を修正して Window クラスまたはスタイルを
 	//  修正してください。
@@ -120,3 +121,44 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 	return CFrameWnd::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }
 
+static CString ReplaceFileExtension(const CString& inputPath, LPCTSTR pNewExt)
+{
+	P_ASSERT(pNewExt[0] == _T('.'));
+	int extPos = inputPath.ReverseFind(_T('.'));
+	// Ignore period at the head.
+	if (0 < extPos) {
+		return inputPath.Left(extPos) + pNewExt;
+	}
+	return inputPath + pNewExt;
+}
+
+void CMainFrame::OnOpenFile()
+{
+	LPCTSTR pFilter = _T(
+		"View file(*.bin)|*.bin|"
+		"PTS file(*.pts)|*.pts||"
+	);
+	CFileDialog dialog(TRUE, nullptr, nullptr, 6UL, pFilter);
+	if (dialog.DoModal() != IDOK) {
+		return;
+	}
+	CString fileExt = dialog.GetFileExt();
+	if (fileExt.CompareNoCase(_T("bin")) == 0) {
+		m_wndView.LoadViewFile(dialog.GetPathName());
+	} else if (fileExt.CompareNoCase(_T("pts")) == 0) {
+		CString ptsFilePath = dialog.GetPathName();
+		CString viewFilePath = ReplaceFileExtension(ptsFilePath, _T(".bin"));
+		CFileDialog binFileDlg(FALSE, _T(".bin"), viewFilePath, 6UL, _T("View file(*.bin)|*.bin||"));
+		if (binFileDlg.DoModal() != IDOK) {
+			return;
+		}
+		viewFilePath = binFileDlg.GetPathName();
+
+		CWaitCursor cursor;
+		using namespace D3D11Graphics;
+		D3DPts2PointBlockListConverter conv;
+		conv.ConvertFile(ptsFilePath, viewFilePath);
+
+		m_wndView.LoadViewFile(viewFilePath);
+	}
+}

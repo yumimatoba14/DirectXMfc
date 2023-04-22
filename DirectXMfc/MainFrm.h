@@ -43,6 +43,8 @@ protected:
 	afx_msg void OnSetFocus(CWnd *pOldWnd);
 	DECLARE_MESSAGE_MAP()
 
+protected:
+	afx_msg void OnOpenFile();
 };
 
 

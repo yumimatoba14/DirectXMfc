@@ -203,6 +203,7 @@
     <ClInclude Include="D3DPointBlockListBuilder.h" />
     <ClInclude Include="D3DPointBlockListHeader.h" />
     <ClInclude Include="D3DPointListBuilder.h" />
+    <ClInclude Include="D3DPts2PointBlockListConverter.h" />
     <ClInclude Include="D3DShaderContext.h" />
     <ClInclude Include="D3DVector.h" />
     <ClInclude Include="D3DVertexBufferEnumerator.h" />
@@ -237,6 +238,7 @@
     <ClCompile Include="D3DPointBlockListBuilder.cpp" />
     <ClCompile Include="D3DPointBlockListHeader.cpp" />
     <ClCompile Include="D3DPointListBuilder.cpp" />
+    <ClCompile Include="D3DPts2PointBlockListConverter.cpp" />
     <ClCompile Include="D3DShaderContext.cpp" />
     <ClCompile Include="D3DVertexBufferEnumerator.cpp" />
     <ClCompile Include="D3DViewOp.cpp" />

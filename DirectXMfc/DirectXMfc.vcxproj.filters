@@ -123,6 +123,9 @@
     <ClInclude Include="D3DWin32FileStreamBuf.h">
       <Filter>D3DGraphics</Filter>
     </ClInclude>
+    <ClInclude Include="D3DPts2PointBlockListConverter.h">
+      <Filter>D3DGraphics</Filter>
+    </ClInclude>
     <ClInclude Include="SettingDialog.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -207,6 +210,9 @@
       <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="D3DWin32FileStreamBuf.cpp">
+      <Filter>D3DGraphics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DPts2PointBlockListConverter.cpp">
       <Filter>D3DGraphics</Filter>
     </ClCompile>
     <ClCompile Include="SettingDialog.cpp">

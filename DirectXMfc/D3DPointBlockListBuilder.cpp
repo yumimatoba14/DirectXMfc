@@ -191,6 +191,36 @@ namespace {
 
 }
 
+// TODO: This function is ad-hoc. To be fixed.
+static double DecideLodBaseLatticeLength(const D3DAabBox3d& blockAabb, int64_t numBlockVertex)
+{
+	int targetPointNumInLattice = 100;
+	const int64_t targetLatticeCountUB = 1ui64 << 20;
+	if (targetPointNumInLattice * targetLatticeCountUB < numBlockVertex) {
+		if (INT_MAX * targetLatticeCountUB < numBlockVertex) {
+			P_THROW_ERROR("Not supported case. numBlockVertex is too large.");
+		}
+		targetPointNumInLattice = static_cast<int>(numBlockVertex / targetLatticeCountUB);
+	}
+	int aResultCount[3];
+	CalculateLatticeDivisionCount(blockAabb, numBlockVertex, targetPointNumInLattice, aResultCount);
+
+	D3DVector3d diagonalVec = blockAabb.GetMaxPoint() - blockAabb.GetMinPoint();
+	const double baseLengthMin = 0.01;
+	double baseLength = HUGE_VAL;
+	for (int i = 0; i < 3; ++i) {
+		P_IS_TRUE(0 < aResultCount[i]);
+		double len = diagonalVec[i] / aResultCount[i];
+		if (len < baseLengthMin) {
+			len = baseLengthMin;
+		}
+		if (len < baseLength) {
+			baseLength = len;
+		}
+	}
+	return baseLength;
+}
+
 void D3DPointBlockListBuilder::BuildPointBlockFile()
 {
 	if (!m_inputVertexFile.IsOpend()) {
@@ -239,7 +269,6 @@ void D3DPointBlockListBuilder::BuildPointBlockFile()
 	resultFile.OpenNewFile(m_resultFilePath);
 	resultFile.SetFilePointer(blockListBegin, FILE_BEGIN);
 
-	const double latticeLength = 0.01;
 	int64_t endOfFilePos = resultFile.GetFilePointer();
 
 	for (size_t iBlock = 0; iBlock < nBlock; ++iBlock) {
@@ -248,6 +277,7 @@ void D3DPointBlockListBuilder::BuildPointBlockFile()
 
 		image.firstBytePos = endOfFilePos;
 
+		const double latticeLength = DecideLodBaseLatticeLength(inBlock.aabb, inBlock.nVertex);
 		D3DExclusiveLodPointListCreator creator(latticeLength);
 		image.nImageByte = creator.CreateImage(
 			dividedFile1, inBlock.blockByteBegin, inBlock.nVertex,

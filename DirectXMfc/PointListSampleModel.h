@@ -117,18 +117,19 @@ public:
 
 	struct InstanceData {
 		XMFLOAT4X4 localToGlobalMatrix;
-		D3DAabBox3d aabb;
+		D3DAabBox3d aabb;	// AABB in model space.
 		D3D11Graphics::D3DExclusiveLodPointListObjectPtr pObject;
 	};
 public:
 	MultiPointListSampleModel2(LPCTSTR pFilePath) : m_filePath(pFilePath) {}
 
+	void PrepareBlockData();
+	const std::vector<InstanceData>& GetIntanceList() const { return m_instanceList; }
 protected:
 	virtual void OnDrawTo(D3D11Graphics::D3DGraphics3D& g);
 
 private:
 	void UpdateDrawnInstances(D3D11Graphics::D3DGraphics3D& g);
-	void PrepareBlockData();
 	void PrepareFile();
 
 private:

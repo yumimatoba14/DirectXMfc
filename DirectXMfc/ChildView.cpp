@@ -12,6 +12,7 @@
 #include "D3DModelPointList.h"
 #include "PointListSampleModel.h"
 #include "D3DModelTriangleList.h"
+#include "D3DPts2PointBlockListConverter.h"
 #include "SettingDialog.h"
 
 using namespace std;
@@ -32,6 +33,25 @@ CChildView::CChildView()
 
 CChildView::~CChildView()
 {
+}
+
+void CChildView::LoadViewFile(LPCTSTR pFilePath)
+{
+	auto pModel = make_unique< MultiPointListSampleModel2>(pFilePath);
+	pModel->PrepareBlockData();
+	D3DAabBox3d modelAabb;
+	for (auto& data : pModel->GetIntanceList()) {
+		modelAabb.Extend(data.aabb.GetMinPoint());
+		modelAabb.Extend(data.aabb.GetMaxPoint());
+	}
+	P_IS_TRUE(modelAabb.IsInitialized());
+
+	D3DVector3d centerPoint = (modelAabb.GetMinPoint() + modelAabb.GetMaxPoint()) * 0.5;
+	m_viewOp.SetEyePoint(centerPoint[0], centerPoint[1], centerPoint[2]);
+	m_viewOp.SetUpDirection(0, 0, 1);
+	m_viewOp.SetVerticalDirection(0, 0, 1);
+	m_pModel = move(pModel);
+	Invalidate();
 }
 
 

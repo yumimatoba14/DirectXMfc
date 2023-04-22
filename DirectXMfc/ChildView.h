@@ -23,6 +23,7 @@ public:
 
 // 操作
 public:
+	void LoadViewFile(LPCTSTR pFilePath);
 
 // オーバーライド
 	protected:
