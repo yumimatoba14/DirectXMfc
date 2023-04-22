@@ -12,6 +12,7 @@
 #include "D3DModelPointList.h"
 #include "PointListSampleModel.h"
 #include "D3DModelTriangleList.h"
+#include "SettingDialog.h"
 
 using namespace std;
 using namespace D3D11Graphics;
@@ -45,6 +46,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_MOUSEWHEEL()
 	ON_WM_TIMER()
 	ON_WM_ERASEBKGND()
+	ON_COMMAND(ID_VIEW_SETTING, &CChildView::OnViewSetting)
 END_MESSAGE_MAP()
 
 
@@ -245,4 +247,97 @@ BOOL CChildView::OnEraseBkgnd(CDC* pDC)
 	m_restartProgressiveView = true;
 	return TRUE;
 	//return CWnd::OnEraseBkgnd(pDC);
+}
+
+namespace {
+	class ViewSettingDialog : public CSettingDialog
+	{
+	public:
+		enum ValueIndex {
+			POINT_SIZE = 1,
+			VIEW_NEAR_Z,
+			VIEW_FAR_Z
+		};
+		ViewSettingDialog(D3DGraphics3D& graphics) : m_graphics(graphics) {}
+
+		int GetChangedCount() const { return m_numChanged; }
+	protected:
+		virtual BOOL OnInitDialog()
+		{
+			m_numChanged = 0;
+			std::unique_ptr<CMFCPropertyGridProperty> pProperty(
+				new CMFCPropertyGridProperty(_T("点サイズ"), COleVariant(m_graphics.GetPointSize()), _T("点の描画サイズ[mm]です"), POINT_SIZE)
+			);
+			m_propertyGrid.AddProperty(pProperty.release());
+			std::unique_ptr<CMFCPropertyGridProperty> pGroup(new CMFCPropertyGridProperty(_T("透視投影")));
+			pProperty.reset(
+				new CMFCPropertyGridProperty(_T("Near Z"), COleVariant(m_graphics.GetPerspectiveViewNearZ()), _T("表示される範囲の視点からの距離の下限値[m]です"), VIEW_NEAR_Z)
+			);
+			pGroup->AddSubItem(pProperty.release());
+			pProperty.reset(
+				new CMFCPropertyGridProperty(_T("Far Z"), COleVariant(m_graphics.GetPerspectiveViewFarZ()), _T("表示される範囲の視点からの距離の上限値[m]です"), VIEW_FAR_Z)
+			);
+			pGroup->AddSubItem(pProperty.release());
+			m_propertyGrid.AddProperty(pGroup.release());
+			return CSettingDialog::OnInitDialog();
+		}
+
+		virtual void OnOK()
+		{
+			int nProperty = m_propertyGrid.GetPropertyCount();
+			for (int iProperty = 0; iProperty < nProperty; ++iProperty) {
+				CMFCPropertyGridProperty* pProp = m_propertyGrid.GetProperty(iProperty);
+				ParsePropertyData(pProp);
+			}
+			CSettingDialog::OnOK();
+		}
+	private:
+		void ParsePropertyData(CMFCPropertyGridProperty* pProp)
+		{
+			P_NOEXCEPT_BEGIN("ParsePropertyData");
+			if (pProp->IsGroup()) {
+				VisitPropertyTree(pProp);
+				return;
+			}
+			if (!pProp->IsModified()) {
+				return;
+			}
+			++m_numChanged;
+			switch (pProp->GetData()) {
+			case POINT_SIZE:
+				m_graphics.SetPointSize(pProp->GetValue().dblVal);
+				break;
+			case VIEW_NEAR_Z:
+				m_graphics.SetPerspectiveViewNearZ(pProp->GetValue().dblVal);
+				break;
+			case VIEW_FAR_Z:
+				m_graphics.SetPerspectiveViewFarZ(pProp->GetValue().dblVal);
+				break;
+			}
+			P_NOEXCEPT_END;
+		}
+
+		void VisitPropertyTree(CMFCPropertyGridProperty* pParent)
+		{
+			int nSubItem = pParent->GetSubItemsCount();
+			for (int iSubItem = 0; iSubItem < nSubItem; ++iSubItem) {
+				CMFCPropertyGridProperty* pSubItem = pParent->GetSubItem(iSubItem);
+				ParsePropertyData(pSubItem);
+			}
+		}
+	private:
+		D3DGraphics3D& m_graphics;
+		int m_numChanged = 0;
+	};
+
+}
+void CChildView::OnViewSetting()
+{
+	ViewSettingDialog dlg(m_graphics);
+	if (dlg.DoModal() != IDOK) {
+		return;
+	}
+	if (0 < dlg.GetChangedCount()) {
+		Invalidate(TRUE);
+	}
 }

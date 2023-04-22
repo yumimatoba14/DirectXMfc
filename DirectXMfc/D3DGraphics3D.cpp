@@ -52,6 +52,20 @@ XMMATRIX D3DGraphics3D::GetModelToProjectionMatrix()
 	);
 }
 
+void D3DGraphics3D::SetPerspectiveViewNearZ(double z)
+{
+	P_IS_TRUE(0 < z);
+	m_viewNearZ = static_cast<float>(z);
+	OnShaderParamModified();
+}
+
+void D3DGraphics3D::SetPerspectiveViewFarZ(double z)
+{
+	P_IS_TRUE(0 < z);
+	m_viewFarZ = static_cast<float>(z);
+	OnShaderParamModified();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void D3DGraphics3D::UpdateShaderParam()

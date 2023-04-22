@@ -216,6 +216,7 @@
     <ClInclude Include="PointListSampleModel.h" />
     <ClInclude Include="PrivateErrorHandling.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SettingDialog.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -251,6 +252,7 @@
     </ClCompile>
     <ClCompile Include="PointListSampleModel.cpp" />
     <ClCompile Include="PrivateErrorHandling.cpp" />
+    <ClCompile Include="SettingDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DirectXMfc.rc" />

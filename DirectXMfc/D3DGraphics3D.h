@@ -87,6 +87,22 @@ public:
 	/// <param name="size"></param>
 	void SetPointSize(double size) { m_pointSize = size; OnShaderParamModified(); }
 
+	double GetPerspectiveViewNearZ() const { return m_viewNearZ; }
+
+	/// <summary>
+	/// Set near z value of perspective view.
+	/// </summary>
+	/// <param name="z">near z value of perspective view which must be positive.</param>
+	void SetPerspectiveViewNearZ(double z);
+
+	double GetPerspectiveViewFarZ() const { return m_viewFarZ; }
+
+	/// <summary>
+	/// Set far z value of perspective view.
+	/// </summary>
+	/// <param name="z">far z value of perspective view which must be positive.</param>
+	void SetPerspectiveViewFarZ(double z);
+
 	void DrawBegin();
 	void DrawEnd() { m_graphics.DrawEnd(); }
 
