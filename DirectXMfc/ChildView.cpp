@@ -39,6 +39,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_SIZE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
+	ON_WM_RBUTTONDOWN()
+	ON_WM_RBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_MOUSEWHEEL()
 	ON_WM_TIMER()
@@ -161,7 +163,9 @@ void CChildView::OnSize(UINT nType, int cx, int cy)
 {
 	CWnd::OnSize(nType, cx, cy);
 
-	m_graphics.ResizeBuffers(CSize(cx, cy));
+	CSize newSize(cx, cy);
+	m_graphics.ResizeBuffers(newSize);
+	m_viewOp.SetViewSize(newSize);
 	UpdateShaderParam();
 }
 
@@ -179,7 +183,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	m_viewOp.StartMouseMove(point);
+	m_viewOp.StartMouseMove(point, D3DViewOp::MOUSE_L_BUTTON);
 	UpdateView();
 
 	CWnd::OnLButtonDown(nFlags, point);
@@ -192,6 +196,24 @@ void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 	UpdateView();
 
 	CWnd::OnLButtonUp(nFlags, point);
+}
+
+
+void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
+{
+	m_viewOp.StartMouseMove(point, D3DViewOp::MOUSE_R_BUTTON);
+	UpdateView();
+
+	CWnd::OnRButtonDown(nFlags, point);
+}
+
+
+void CChildView::OnRButtonUp(UINT nFlags, CPoint point)
+{
+	m_viewOp.EndMouseMove(point);
+	UpdateView();
+
+	CWnd::OnRButtonUp(nFlags, point);
 }
 
 
