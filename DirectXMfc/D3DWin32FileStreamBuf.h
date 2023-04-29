@@ -7,7 +7,6 @@ namespace D3D11Graphics {
 class D3DWin32FileStreamBuf : public std::streambuf
 {
 private:
-	typedef std::streambuf BaseClass;
 	typedef std::ios_base ios_base;
 public:
 	D3DWin32FileStreamBuf(size_t nBufferByte = 1024) : m_hFile(INVALID_HANDLE_VALUE), m_buffer(nBufferByte) {}
@@ -60,6 +59,8 @@ protected:
 	virtual pos_type seekpos(pos_type pos, ios_base::openmode mode = ios_base::in | ios_base::out);
 
 private:
+	bool IsReadBufferEnabled() const { return eback() != nullptr; }
+	bool IsWriteBufferEnabled() const { return pbase() != nullptr; }
 	void OnDetachHandle();
 	void ResetBuffer()
 	{
@@ -68,6 +69,7 @@ private:
 	}
 	std::streamsize ReadFromFile(std::streamsize nBufferByte, char* aBufferByte);
 	std::streamsize WriteToFile(std::streamsize nBufferByte, const char* aBufferByte);
+	pos_type SeekFile(off_type offset, ios_base::seekdir way);
 private:
 	HANDLE m_hFile;
 	std::vector<char> m_buffer;

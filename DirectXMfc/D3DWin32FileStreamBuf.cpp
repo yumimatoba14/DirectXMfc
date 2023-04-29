@@ -77,7 +77,7 @@ std::streamsize D3DWin32FileStreamBuf::xsgetn(char_type* aOutByte, std::streamsi
 D3DWin32FileStreamBuf::int_type D3DWin32FileStreamBuf::underflow()
 {
 	// This function may enable input buffer. So output buffer must have been disabled.
-	P_IS_TRUE(pbase() == nullptr);
+	P_IS_TRUE(!IsWriteBufferEnabled());
 	P_ASSERT(gptr() == egptr());
 	if (m_buffer.empty()) {
 		P_ASSERT(false);	// uflow() must be used, instead.
@@ -106,7 +106,7 @@ D3DWin32FileStreamBuf::int_type D3DWin32FileStreamBuf::uflow()
 	}
 	else {
 		// Use implementation of the base class which uses underflow().
-		return BaseClass::uflow();
+		return streambuf::uflow();
 	}
 }
 
@@ -115,7 +115,7 @@ D3DWin32FileStreamBuf::int_type D3DWin32FileStreamBuf::uflow()
 std::streamsize D3DWin32FileStreamBuf::xsputn(const char_type* aBuffer, std::streamsize bufCount)
 {
 	// This function may enable output buffer. So input buffer must have been disabled.
-	P_IS_TRUE(eback() == nullptr);
+	P_IS_TRUE(!IsReadBufferEnabled());
 
 	if (pbase() == epptr() && !m_buffer.empty()) {
 		// enable buffer
@@ -207,24 +207,19 @@ D3DWin32FileStreamBuf::pos_type D3DWin32FileStreamBuf::seekoff(
 			P_THROW_ERROR("pubsync() failed.");
 		}
 	}
-	DWORD method;
-	switch (way) {
-	case ios_base::beg: method = FILE_BEGIN; break;
-	case ios_base::cur: method = FILE_CURRENT; break;
-	case ios_base::end: method = FILE_END; break;
-	default:
-		P_THROW_ERROR("Not supported seekdir.");
-	}
-
-	LARGE_INTEGER offsetLI;
-	offsetLI.QuadPart = offset;
-	LARGE_INTEGER newPosLI;
-	BOOL isOk = ::SetFilePointerEx(m_hFile, offsetLI, &newPosLI, method);
-	if (!isOk) {
-		P_THROW_ERROR("SetFilePointerEx");
+	off_type fileOffset = offset;
+	if (way == ios_base::cur) {
+		if (IsReadBufferEnabled()) {
+			// maintain offset value so as to cancel bytes
+			// which are in the buffer and have not been read, yet.
+			ptrdiff_t numByteInBuffer = egptr() - gptr();
+			P_ASSERT(0 <= numByteInBuffer);
+			fileOffset -= numByteInBuffer;
+		}
 	}
 	ResetBuffer();
-	return streampos(newPosLI.QuadPart);
+
+	return SeekFile(fileOffset, way);
 }
 
 D3DWin32FileStreamBuf::pos_type D3DWin32FileStreamBuf::seekpos(
@@ -289,6 +284,27 @@ std::streamsize D3DWin32FileStreamBuf::WriteToFile(std::streamsize nBufferByte, 
 		nRemainingByte -= nWritten;
 	}
 	return nWrittenByte;
+}
+
+streambuf::pos_type D3DWin32FileStreamBuf::SeekFile(off_type offset, ios_base::seekdir way)
+{
+	DWORD method;
+	switch (way) {
+	case ios_base::beg: method = FILE_BEGIN; break;
+	case ios_base::cur: method = FILE_CURRENT; break;
+	case ios_base::end: method = FILE_END; break;
+	default:
+		P_THROW_ERROR("Not supported seekdir.");
+	}
+
+	LARGE_INTEGER offsetLI;
+	offsetLI.QuadPart = offset;
+	LARGE_INTEGER newPosLI;
+	BOOL isOk = ::SetFilePointerEx(m_hFile, offsetLI, &newPosLI, method);
+	if (!isOk) {
+		P_THROW_ERROR("SetFilePointerEx");
+	}
+	return streampos(newPosLI.QuadPart);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
