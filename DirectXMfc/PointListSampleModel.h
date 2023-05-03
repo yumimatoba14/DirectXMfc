@@ -136,6 +136,7 @@ private:
 	D3D11Graphics::D3DMemoryMappedFile m_mmFile;
 	std::vector<InstanceData> m_instanceList;
 	std::vector<size_t> m_drawnInstanceIndices;
+	bool m_isCreatingFile = false;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -217,10 +217,6 @@ int64_t D3DExclusiveLodPointListCreator::CreateImageImpl(
 	MmFileCreator& resultFileCreator, int64_t resultFileByteBegin
 )
 {
-	VectorToLatticeIndex toLatticeIndex(vertexAabb, m_latticeLength);
-	size_t nLattice = toLatticeIndex.GetLatticeCount();
-
-	P_IS_TRUE(nLattice < (uint64_t)nInputVertex);
 	P_IS_TRUE(MIN_BASE_LENGTH < m_latticeLength);
 
 	D3DExclusiveLodPointListHeader header;

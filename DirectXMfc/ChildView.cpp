@@ -81,6 +81,7 @@ void CChildView::UpdateView()
 
 void CChildView::OnPaint()
 {
+	P_NOEXCEPT_BEGIN("CChildView::OnPaint");
 	CPaintDC dc(this); // 描画のデバイス コンテキスト
 	ULONGLONG startTickMiliSec = ::GetTickCount64();
 	
@@ -151,6 +152,7 @@ void CChildView::OnPaint()
 			m_progressiveViewTimerId = SetTimer(ID_PROGRESSIVE_VIEW_TIMER, nEllapse, nullptr);
 		}
 	}
+	P_NOEXCEPT_END;
 }
 
 

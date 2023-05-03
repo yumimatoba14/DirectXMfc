@@ -508,6 +508,10 @@ void MultiPointListSampleModel2::PrepareBlockData()
 	if (!m_instanceList.empty()) {
 		return;
 	}
+	if (m_isCreatingFile) {
+		P_WRITE_LOG("PrepareBlockData() has been called twice.");
+		return;
+	}
 
 	bool isOk = m_mmFile.OpenToRead(m_filePath);
 	if (!isOk) {
@@ -537,6 +541,7 @@ void MultiPointListSampleModel2::PrepareBlockData()
 
 void MultiPointListSampleModel2::PrepareFile()
 {
+	m_isCreatingFile = true;
 	auto pBuilder = make_unique<D3DPointBlockListBuilder>(m_filePath);
 
 	const size_t nX = 1000;
@@ -568,6 +573,7 @@ void MultiPointListSampleModel2::PrepareFile()
 	}
 
 	pBuilder->BuildPointBlockFile();
+	m_isCreatingFile = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
