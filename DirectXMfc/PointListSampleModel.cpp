@@ -442,7 +442,7 @@ static bool CalcBoxDistanceInProjection(const XMMATRIX& modelProjMatrix, const D
 	const float tolZero = 1e-6f;
 	*pDistance = 0;
 	D3DAabBox3d projAabb;
-	bool hasNegativeW = false;
+	bool hasNonPositiveW = false;
 	for (int i = 0; i < 8; ++i) {
 		float coord[3];
 		coord[0] = static_cast<float>((i & 0x01) ? aabb.GetMaxPoint()[0] : aabb.GetMinPoint()[0]);
@@ -454,9 +454,11 @@ static bool CalcBoxDistanceInProjection(const XMMATRIX& modelProjMatrix, const D
 		float w = XMVectorGetW(projVecHomo);
 		// w = -zv where zv is z in view coordinate system. Negative z shall be drawn in RH system.
 		if (w < tolZero) {
-			P_ASSERT(XMVectorGetZ(projVecHomo) < 0);
+			if (0 <= XMVectorGetZ(projVecHomo)) {
+				XMVectorSetZ(projVecHomo, 0.0f);
+			}
 			w = tolZero;
-			hasNegativeW = true;
+			hasNonPositiveW = true;
 		}
 		double invW = 1.0 / w;
 		D3DVector3d projVec;
@@ -476,7 +478,7 @@ static bool CalcBoxDistanceInProjection(const XMMATRIX& modelProjMatrix, const D
 	if (maxPoint[2] < 0 || 1 < minPoint[2]) {
 		return false;
 	}
-	if (!hasNegativeW && 0 < minPoint[2]) {
+	if (!hasNonPositiveW && 0 < minPoint[2]) {
 		*pDistance = minPoint[2];
 	}
 	return true;
