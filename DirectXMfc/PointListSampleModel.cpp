@@ -606,8 +606,8 @@ void MultiPointListSampleModel2::PrepareFile()
 
 	const size_t nX = 1000;
 	const size_t nY = 1000;
-	const size_t nZ = 100;
-	const size_t nX2 = 10;
+	const size_t nZ = 10;
+	const size_t nX2 = 1;
 	const double x0 = 0;
 	const double y0 = 0;
 	const double z0 = 0;
