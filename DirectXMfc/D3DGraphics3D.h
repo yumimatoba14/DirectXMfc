@@ -104,13 +104,15 @@ public:
 	void SetPerspectiveViewFarZ(double z);
 
 	void DrawBegin();
+	void DrawBeginForSelection() { m_graphics.DrawBegin(true, true); }
 	void DrawEnd() { m_graphics.DrawEnd(); }
+	D3DSelectionTargetId DrawEndForSelection(const CPoint& mousePos);
 
 	void SetDrawSelectedEntityMode(bool selectedEntityMode);
 
 	void DrawPointList(D3DModelPointList* pModel);
 	void DrawPointListEnumerator(D3DModelPointListEnumerator* pModel);
-	void DrawPointArray(const PointListVertex aVertex[], int64_t nVertex);
+	void DrawPointArray(const PointListVertex aVertex[], int64_t nVertex, D3DSelectionTargetId selectionTargetIdFirst = D3D_SELECTION_TARGET_NULL);
 	void DrawTriangleList(D3DModelTriangleList* pModel);
 
 	void ResizeBuffers(const SIZE& newSize);
@@ -122,6 +124,25 @@ public:
 	int64_t GetDrawnPointCount() const { return m_graphics.GetDrawnPointCount(); }
 private:
 	void InitializeShaderContexts();
+	void InitializeShaderContextsForNormalRendering();
+	void InitializeShaderContextsForSelection();
+
+	const D3DShaderContext& GetTriangleListShaderContext() const {
+		if (m_graphics.IsSelectionMode()) {
+			return m_selectionTriangleListSc;
+		}
+		else {
+			return m_triangleListSc;
+		}
+	}
+	const D3DShaderContext& GetPointListShaderContext() const {
+		if (m_graphics.IsSelectionMode()) {
+			return m_selectionPointListSc;
+		}
+		else {
+			return m_pointListSc;
+		}
+	}
 
 	void OnModelToViewMatrixModified() {
 		m_isNeedToUpdateModelToViewMatrix = true;
@@ -162,8 +183,11 @@ private:
 	D3DBufferPtr m_pShaderParamConstBuf;
 	D3DShaderContext m_triangleListSc;
 	D3DShaderContext m_pointListSc;
+	D3DShaderContext m_selectionTriangleListSc;
+	D3DShaderContext m_selectionPointListSc;
 	D3DBufferPtr m_pTempVertexBuffer;
-	UINT m_tempVertexBufferSize = (1 << 20) * sizeof(PointListVertex);
+	D3DBufferPtr m_pTempVertexStIdBuffer;
+	UINT m_tempBufferVertexNumMax = (1 << 20);
 	bool m_isViewMoving = false;
 	bool m_isProgressiveViewMode = false;
 	bool m_isProgressiveViewFollowingFrame = false;

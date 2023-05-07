@@ -14,10 +14,10 @@ class D3DGraphics
 {
 public:
 	typedef Microsoft::WRL::ComPtr<IDXGIAdapter> DXGIAdapterPtr;
-	typedef Microsoft::WRL::ComPtr<ID3D11Texture2D> D3D11Texture2DPtr;
 
 	enum class DrawMode {
 		DRAW_NORMAL = 0,
+		DRAW_FOR_SELECTION,
 		DRAW_SELECTED_ENTITY
 	};
 
@@ -61,23 +61,39 @@ public:
 
 	D3DInputLayoutPtr CreateInputLayout(
 		const D3D11_INPUT_ELEMENT_DESC* aElement, UINT nElement,
-		const std::string& fileName, const std::string& entryPoint
+		const std::string& fileName, const std::string& entryPoint, const D3D_SHADER_MACRO* aMacro
 	);
-	D3DVertexShaderPtr CreateVertexShader(const std::string& fileName, const std::string& entryPoint);
-	D3DGeometryShaderPtr CreateGeometryShader(const std::string& fileName, const std::string& entryPoint);
-	D3DPixelShaderPtr CreatePixelShader(const std::string& fileName, const std::string& entryPoint);
+	D3DVertexShaderPtr CreateVertexShader(
+		const std::string& fileName, const std::string& entryPoint, const D3D_SHADER_MACRO* aMacro
+	);
+	D3DGeometryShaderPtr CreateGeometryShader(
+		const std::string& fileName, const std::string& entryPoint, const D3D_SHADER_MACRO* aMacro
+	);
+	D3DPixelShaderPtr CreatePixelShader(
+		const std::string& fileName, const std::string& entryPoint, const D3D_SHADER_MACRO* aMacro
+	);
 
 public:
+	D3DTexture2DPtr CaptureRenderTargetStagingTexture(const D3DRenderTargetViewPtr& pRenderTarget);
 	D3DMappedSubResource MapDyamaicBuffer(const D3DBufferPtr& pDynamicBuffer);
+	D3DMappedSubResource MapStagingBuffer(
+		const D3DResourcePtr& pBuffer, D3D11_MAP mapType, D3D11_MAPPED_SUBRESOURCE* pMappedSubResource
+	);
 
 	// functions for DeviceContext.
 public:
 	DrawMode GetDrawMode() const { return m_drawMode; }
+	bool IsSelectionMode() const { return m_drawMode == DrawMode::DRAW_FOR_SELECTION; }
 	void SetDrawSelectedEntityMode(bool isSelectedEntityMode);
 
-	void DrawBegin(bool isEraseBackground);
+	void DrawBegin(bool isForSelection, bool isEraseBackground);
 	void DrawPointList(
 		const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, size_t vertexSize, size_t nVertex
+	);
+	void DrawPointList(
+		const D3DShaderContext& sc, size_t nVertex,
+		const D3DBufferPtr& pVertexBuf0, size_t vertexSize0,
+		const D3DBufferPtr& pVertexBuf1, size_t vertexSize1
 	);
 	void DrawPointLists(
 		const D3DShaderContext& sc, D3DVertexBufferEnumerator* pVertexBufs, size_t vertexSize
@@ -87,7 +103,7 @@ public:
 		size_t vertexSize, size_t nIndex
 	);
 	void SetShaderContext(const D3DShaderContext& context);
-	void DrawEnd();
+	D3DRenderTargetViewPtr DrawEnd();
 
 	void ResizeBuffers(const CSize& newSize);
 	bool SaveViewToFile(REFGUID targetFormat, LPCTSTR targetFilePath);
@@ -95,6 +111,7 @@ public:
 private:
 	void PrepareDepthStencilView();
 	void PrepareRenderTargetView();
+	void PrepareRenderTargetViewForSelection();
 
 private:
 	DXGIAdapterPtr m_pAdapter;

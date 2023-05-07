@@ -253,7 +253,8 @@ D3DBufferPtr D3DGraphics::CreateConstantBuffer(size_t nByte)
 }
 
 D3DInputLayoutPtr D3DGraphics::CreateInputLayout(
-	const D3D11_INPUT_ELEMENT_DESC* aElement, UINT nElement, const string& fileName, const string& entryPoint
+	const D3D11_INPUT_ELEMENT_DESC* aElement, UINT nElement,
+	const string& fileName, const string& entryPoint, const D3D_SHADER_MACRO* aMacro
 )
 {
 	bool showError = true;
@@ -267,7 +268,7 @@ D3DInputLayoutPtr D3DGraphics::CreateInputLayout(
 	ComPtr<ID3DBlob> blob;
 	ComPtr<ID3DBlob> pErrorBlob = NULL;
 	HRESULT hr = D3DCompileFromFile(
-		CA2W(fileName.c_str()), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), VS_COMPILE_TARGET, compileFlags, 0,
+		CA2W(fileName.c_str()), aMacro, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), VS_COMPILE_TARGET, compileFlags, 0,
 		&blob, &pErrorBlob
 	);
 	if (FAILED(hr))
@@ -290,7 +291,9 @@ D3DInputLayoutPtr D3DGraphics::CreateInputLayout(
 	return pLayout;
 }
 
-D3DVertexShaderPtr D3DGraphics::CreateVertexShader(const std::string& fileName, const std::string& entryPoint)
+D3DVertexShaderPtr D3DGraphics::CreateVertexShader(
+	const std::string& fileName, const std::string& entryPoint, const D3D_SHADER_MACRO* aMacro
+)
 {
 	bool showError = true;
 	D3DVertexShaderPtr pShader;
@@ -303,7 +306,7 @@ D3DVertexShaderPtr D3DGraphics::CreateVertexShader(const std::string& fileName, 
 	ComPtr<ID3DBlob> blob;
 	//setlocale(LC_CTYPE, "jpn");
 	ComPtr<ID3DBlob> pErrorBlob = NULL;
-	HRESULT hr = D3DCompileFromFile(CA2W(fileName.c_str()), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), VS_COMPILE_TARGET, compileFlags, 0, &blob, &pErrorBlob);
+	HRESULT hr = D3DCompileFromFile(CA2W(fileName.c_str()), aMacro, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), VS_COMPILE_TARGET, compileFlags, 0, &blob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (showError)
@@ -324,7 +327,9 @@ D3DVertexShaderPtr D3DGraphics::CreateVertexShader(const std::string& fileName, 
 	return pShader;
 }
 
-D3DGeometryShaderPtr D3DGraphics::CreateGeometryShader(const string& fileName, const string& entryPoint)
+D3DGeometryShaderPtr D3DGraphics::CreateGeometryShader(
+	const string& fileName, const string& entryPoint, const D3D_SHADER_MACRO* aMacro
+)
 {
 	bool showError = true;
 	D3DGeometryShaderPtr pShader;
@@ -336,7 +341,7 @@ D3DGeometryShaderPtr D3DGraphics::CreateGeometryShader(const string& fileName, c
 #endif
 	ComPtr<ID3DBlob> blob;
 	ComPtr<ID3DBlob> pErrorBlob = NULL;
-	HRESULT hr = D3DCompileFromFile(CA2W(fileName.c_str()), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), "gs_5_0", compileFlags, 0, &blob, &pErrorBlob);
+	HRESULT hr = D3DCompileFromFile(CA2W(fileName.c_str()), aMacro, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), "gs_5_0", compileFlags, 0, &blob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (showError) {
@@ -356,7 +361,9 @@ D3DGeometryShaderPtr D3DGraphics::CreateGeometryShader(const string& fileName, c
 	return pShader;
 }
 
-D3DPixelShaderPtr D3DGraphics::CreatePixelShader(const string& fileName, const string& entryPoint)
+D3DPixelShaderPtr D3DGraphics::CreatePixelShader(
+	const string& fileName, const string& entryPoint, const D3D_SHADER_MACRO* aMacro
+)
 {
 	bool showError = true;
 	D3DPixelShaderPtr pShader;
@@ -368,7 +375,7 @@ D3DPixelShaderPtr D3DGraphics::CreatePixelShader(const string& fileName, const s
 #endif
 	ComPtr<ID3DBlob> blob;
 	ComPtr<ID3DBlob> pErrorBlob = NULL;
-	HRESULT hr = D3DCompileFromFile(CA2W(fileName.c_str()), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), "ps_5_0", compileFlags, 0, &blob, &pErrorBlob);
+	HRESULT hr = D3DCompileFromFile(CA2W(fileName.c_str()), aMacro, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), "ps_5_0", compileFlags, 0, &blob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (showError) {
@@ -390,6 +397,53 @@ D3DPixelShaderPtr D3DGraphics::CreatePixelShader(const string& fileName, const s
 
 ////////////////////////////////////////////////////////////////////////////////
 
+D3DTexture2DPtr D3DGraphics::CaptureRenderTargetStagingTexture(const D3DRenderTargetViewPtr& pRtView)
+{
+	D3DResourcePtr pRtResource;
+	pRtView->GetResource(&pRtResource);
+	P_IS_TRUE(pRtResource);
+
+	D3D11_RESOURCE_DIMENSION resType = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+	pRtResource->GetType(&resType);
+	if (resType != D3D11_RESOURCE_DIMENSION_TEXTURE2D) {
+		P_THROW_ERROR("CaptureTexture2D");
+	}
+	D3DTexture2DPtr pRtTexture;
+	HRESULT hr = pRtResource->QueryInterface(IID_PPV_ARGS(&pRtTexture));
+	if (FAILED(hr)) {
+		P_THROW_ERROR("QueryInterface");
+	}
+
+	D3D11_TEXTURE2D_DESC desc;
+	pRtTexture->GetDesc(&desc);
+
+	if (1 < desc.SampleDesc.Count) {
+		P_THROW_ERROR("Not supported case (1 < desc.SampleDesc.Count)");
+	}
+
+	D3DTexture2DPtr pStaging;
+	if ((desc.Usage == D3D11_USAGE_STAGING) && (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ)) {
+		pStaging = pRtTexture;
+	}
+	else {
+		D3D11_TEXTURE2D_DESC stagingDesc = desc;
+		stagingDesc.BindFlags = 0;
+		stagingDesc.MiscFlags &= D3D11_RESOURCE_MISC_TEXTURECUBE;
+		stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		stagingDesc.Usage = D3D11_USAGE_STAGING;
+
+		hr = m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &pStaging);
+		if (FAILED(hr)) {
+			P_THROW_ERROR("CreateTexture2D");
+		}
+		P_IS_TRUE(pStaging);
+
+		m_pDC->CopyResource(pStaging.Get(), pRtResource.Get());
+	}
+
+	return pStaging;
+}
+
 D3DMappedSubResource D3DGraphics::MapDyamaicBuffer(const D3DBufferPtr& pDynamicBuffer)
 {
 	P_IS_TRUE(pDynamicBuffer != nullptr);
@@ -399,6 +453,26 @@ D3DMappedSubResource D3DGraphics::MapDyamaicBuffer(const D3DBufferPtr& pDynamicB
 	ZeroMemory(&mappedData, sizeof(D3D11_MAPPED_SUBRESOURCE));
 	m_pDC->Map(pDynamicBuffer.Get(), 0, mapType, mapFlags, &mappedData);
 	return D3DMappedSubResource(m_pDC, pDynamicBuffer, mappedData.pData);
+}
+
+D3DMappedSubResource D3DGraphics::MapStagingBuffer(
+	const D3DResourcePtr& pBuffer, D3D11_MAP mapType, D3D11_MAPPED_SUBRESOURCE* pMappedSubResource
+)
+{
+	UINT subResourceId = 0;
+	UINT mapFlags = 0;
+	D3D11_MAPPED_SUBRESOURCE mappedData;
+	ZeroMemory(&mappedData, sizeof(D3D11_MAPPED_SUBRESOURCE));
+
+	HRESULT hr = m_pDC->Map(pBuffer.Get(), subResourceId, mapType, mapFlags, &mappedData);
+	if (FAILED(hr)) {
+		P_THROW_ERROR("Map");
+	}
+
+	if (pMappedSubResource != nullptr) {
+		*pMappedSubResource = mappedData;
+	}
+	return D3DMappedSubResource(m_pDC, pBuffer, mappedData.pData);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -417,13 +491,24 @@ void D3DGraphics::SetDrawSelectedEntityMode(bool isSelectedEntityMode)
 	}
 }
 
-void D3DGraphics::DrawBegin(bool isEraseBackground)
+void D3DGraphics::DrawBegin(bool isForSelection, bool isEraseBackground)
 {
 	PrepareDepthStencilView();
-	PrepareRenderTargetView();
+	if (isForSelection) {
+		m_drawMode = DrawMode::DRAW_FOR_SELECTION;
+		PrepareRenderTargetViewForSelection();
+	} else {
+		m_drawMode = DrawMode::DRAW_NORMAL;
+		PrepareRenderTargetView();
+	}
 
 	if (isEraseBackground) {
 		float aClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f }; //red,green,blue,alpha
+		if (isForSelection) {
+			// Default color shall be 0 because D3D_SELECTION_TARGET_NULL is 0.
+			// Transparency shall not be used in DRAW_FOR_SELECTION mode.
+			aClearColor[3] = 0.0f;
+		}
 		m_pDC->ClearRenderTargetView(m_pRenderTargetView.Get(), aClearColor);
 		m_pDC->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
@@ -448,6 +533,27 @@ void D3DGraphics::DrawPointList(
 	UINT aVertexSize[1] = { (UINT)vertexSize };
 	UINT aOffset[1] = { 0 };
 	m_pDC->IASetVertexBuffers(0, 1, apVB, aVertexSize, aOffset);
+
+	SetShaderContext(sc);
+	m_pDC->Draw((UINT)nVertex, 0);
+
+	if (GetDrawMode() == DrawMode::DRAW_NORMAL) {
+		m_nDrawnPoint += nVertex;
+	}
+}
+
+void D3DGraphics::DrawPointList(
+	const D3DShaderContext& sc, size_t nVertex,
+	const D3DBufferPtr& pVertexBuf0, size_t vertexSize0,
+	const D3DBufferPtr& pVertexBuf1, size_t vertexSize1
+)
+{
+	P_ASSERT(nVertex <= UINT_MAX);
+	m_pDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	ID3D11Buffer* apVB[2] = { pVertexBuf0.Get(), pVertexBuf1.Get() };
+	UINT aVertexSize[2] = { (UINT)vertexSize0, (UINT)vertexSize1 };
+	UINT aOffset[2] = { 0, 0 };
+	m_pDC->IASetVertexBuffers(0, 2, apVB, aVertexSize, aOffset);
 
 	SetShaderContext(sc);
 	m_pDC->Draw((UINT)nVertex, 0);
@@ -514,12 +620,20 @@ void D3DGraphics::SetShaderContext(const D3DShaderContext& context)
 	m_pDC->PSSetShader(context.GetPixelShader().Get(), nullptr, 0);
 }
 
-void D3DGraphics::DrawEnd()
+D3DRenderTargetViewPtr D3DGraphics::DrawEnd()
 {
-	HRESULT hr = m_pSwapChain->Present(0, 0);
-	if (FAILED(hr)) {
-		P_IGNORE_ERROR("Present");
+	D3DRenderTargetViewPtr pResult = m_pRenderTargetView;
+	if (IsSelectionMode()) {
+		m_pRenderTargetView.Reset();
+		m_drawMode = DrawMode::DRAW_NORMAL;
 	}
+	else {
+		HRESULT hr = m_pSwapChain->Present(0, 0);
+		if (FAILED(hr)) {
+			P_IGNORE_ERROR("Present");
+		}
+	}
+	return pResult;
 }
 
 void D3DGraphics::ResizeBuffers(const CSize& newSize)
@@ -555,7 +669,7 @@ bool D3DGraphics::SaveViewToFile(REFGUID targetFormat, LPCTSTR targetFilePath)
 {
 	P_IS_TRUE(targetFilePath != nullptr);
 
-	ID3DResourcePtr pResource;
+	D3DResourcePtr pResource;
 	m_pRenderTargetView->GetResource(&pResource);
 	P_IS_TRUE(pResource);
 
@@ -594,7 +708,7 @@ void D3DGraphics::PrepareDepthStencilView()
 	hTexture2dDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	hTexture2dDesc.CPUAccessFlags = 0;
 	hTexture2dDesc.MiscFlags = 0;
-	D3D11Texture2DPtr pDepthStencilBuffer;
+	D3DTexture2DPtr pDepthStencilBuffer;
 	hr = m_pDevice->CreateTexture2D(&hTexture2dDesc, NULL, &pDepthStencilBuffer);
 	if (FAILED(hr)) {
 		P_THROW_ERROR("CreateTexture2D");
@@ -612,14 +726,48 @@ void D3DGraphics::PrepareDepthStencilView()
 
 void D3DGraphics::PrepareRenderTargetView()
 {
+	P_IS_TRUE(!IsSelectionMode());
 	if (m_pRenderTargetView.Get()) {
 		return;
 	}
 
-	D3D11Texture2DPtr pRenderTargetBuffer;
+	D3DTexture2DPtr pRenderTargetBuffer;
 	HRESULT hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pRenderTargetBuffer));
 	if (FAILED(hr)) {
 		P_THROW_ERROR("GetBuffer");
+	}
+
+	hr = m_pDevice->CreateRenderTargetView(pRenderTargetBuffer.Get(), NULL, &m_pRenderTargetView);
+	if (FAILED(hr)) {
+		P_THROW_ERROR("CreateRenderTargetView");
+	}
+}
+
+void D3DGraphics::PrepareRenderTargetViewForSelection()
+{
+	m_pRenderTargetView.Reset();
+
+	DXGI_SWAP_CHAIN_DESC sd;
+	HRESULT hr = m_pSwapChain->GetDesc(&sd);
+	if (FAILED(hr)) {
+		P_THROW_ERROR("GetDesc");
+	}
+
+	D3D11_TEXTURE2D_DESC hTexture2dDesc;
+	hTexture2dDesc.Width = sd.BufferDesc.Width;
+	hTexture2dDesc.Height = sd.BufferDesc.Height;
+	hTexture2dDesc.MipLevels = 1;
+	hTexture2dDesc.ArraySize = 1;
+	hTexture2dDesc.Format = DXGI_FORMAT_R16G16B16A16_UINT;
+	hTexture2dDesc.SampleDesc = sd.SampleDesc;
+	hTexture2dDesc.Usage = D3D11_USAGE_DEFAULT;
+	hTexture2dDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
+	hTexture2dDesc.CPUAccessFlags = 0;
+	hTexture2dDesc.MiscFlags = 0;
+	D3DTexture2DPtr pRenderTargetBuffer;
+	hr = m_pDevice->CreateTexture2D(&hTexture2dDesc, NULL, &pRenderTargetBuffer);
+	if (FAILED(hr)) {
+		P_THROW_ERROR("CreateTexture2D");
 	}
 
 	hr = m_pDevice->CreateRenderTargetView(pRenderTargetBuffer.Get(), NULL, &m_pRenderTargetView);

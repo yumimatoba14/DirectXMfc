@@ -1,3 +1,5 @@
+//#define RGBA_TYPE float4
+
 cbuffer ShaderParam : register(b0)
 {
 	matrix viewMatrix;
@@ -11,13 +13,13 @@ cbuffer ShaderParam : register(b0)
 struct VS_INPUT
 {
 	float3 Pos : POSITION;
-	float4 Col : COLOR;
+	RGBA_TYPE Col : COLOR;
 };
 
 struct PS_INPUT
 {
 	float4 Pos : SV_POSITION;
-	float4 Col : COLOR;
+	RGBA_TYPE Col : COLOR;
 };
 
 PS_INPUT vsMain(VS_INPUT pos)
@@ -68,7 +70,7 @@ void gsMain(point PS_INPUT inPoint[1],                       // ƒ|ƒCƒ“ƒg ƒvƒŠƒ~ƒ
 	triStream.RestartStrip();
 }
 
-float4 psMain(PS_INPUT input) : SV_TARGET
+RGBA_TYPE psMain(PS_INPUT input) : SV_TARGET
 {
 	return input.Col;
 }

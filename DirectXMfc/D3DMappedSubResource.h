@@ -9,7 +9,7 @@ class D3DMappedSubResource
 public:
 	D3DMappedSubResource() noexcept : m_pDC(nullptr), m_pSubResource(nullptr), m_aData(nullptr)
 	{}
-	D3DMappedSubResource(ID3DDeviceContextPtr pDC, ID3DResourcePtr pSubResource, void* pData) noexcept
+	D3DMappedSubResource(D3DDeviceContextPtr pDC, D3DResourcePtr pSubResource, void* pData) noexcept
 		: m_pDC(std::move(pDC)), m_pSubResource(std::move(pSubResource)),
 		m_aData(static_cast<char*>(pData))
 	{}
@@ -34,6 +34,8 @@ public:
 	bool IsMapped() const { return m_pDC && m_pSubResource; }
 	void Unmap();
 
+	template<class T>
+	T* ToArray(size_t iData) const { return (T*)(m_aData + iData); }
 	void Write(const void* pData, UINT dataByte);
 
 	// It is assumed that this function is called via ADL.
@@ -45,8 +47,8 @@ public:
 	}
 
 private:
-	ID3DDeviceContextPtr m_pDC;
-	ID3DResourcePtr m_pSubResource;
+	D3DDeviceContextPtr m_pDC;
+	D3DResourcePtr m_pSubResource;
 	char* m_aData;
 };
 
