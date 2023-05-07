@@ -37,6 +37,7 @@ public:
 private:
 	void UpdateShaderParam();
 	void UpdateView();
+	void SelectPointImpl(const CPoint& selectPointOnView);
 	void DrawSelectedEntities();
 private:
 	D3D11Graphics::D3DGraphics3D m_graphics;

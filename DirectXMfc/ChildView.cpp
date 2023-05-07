@@ -104,6 +104,25 @@ void CChildView::UpdateView()
 	Invalidate(TRUE);	// The value of TRUE is actually not used because OnEraseBkgnd() has been overridden.
 }
 
+void CChildView::SelectPointImpl(const CPoint& selectPointOnView)
+{
+	if (!m_pModel) {
+		return;
+	}
+	m_graphics.SetProgressiveViewMode(false);
+	m_graphics.DrawBeginForSelection();
+	m_pModel->DrawTo(m_graphics);
+	D3DSelectionTargetId pickedId = m_graphics.DrawEndForSelection(selectPointOnView);
+	if (pickedId == D3D_SELECTION_TARGET_NULL) {
+		m_selectedPoints.clear();
+	}
+	else {
+		m_selectedPoints = m_pModel->SelectPoints(pickedId);
+	}
+
+	Invalidate();
+}
+
 void CChildView::DrawSelectedEntities()
 {
 	vector<D3DGraphics3D::PointListVertex> vertices;
@@ -224,7 +243,6 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	m_viewOp.StartMouseMove(point, D3DViewOp::MOUSE_L_BUTTON);
-	UpdateView();
 
 	CWnd::OnLButtonDown(nFlags, point);
 }
@@ -232,8 +250,13 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	m_viewOp.EndMouseMove(point);
-	UpdateView();
+	if (point != m_viewOp.GetMouseLastPoint()) {
+		UpdateView();
+	}
+	if (!m_viewOp.IsMouseMoved()) {
+		SelectPointImpl(point);
+	}
+	m_viewOp.EndMouseMove();
 
 	CWnd::OnLButtonUp(nFlags, point);
 }

@@ -22,7 +22,6 @@ public:
 	D3DViewOp();
 
 	void SetEyePoint(double x, double y, double z);
-public:
 	void SetUpDirection(double x, double y, double z);
 	void SetVerticalDirection(double x, double y, double z);
 
@@ -33,10 +32,12 @@ public:
 	void GoForward(double length);
 
 	DirectX::XMFLOAT4X4 GetViewMatrix() const;
+	CPoint GetMouseLastPoint() const { return m_mouseLastPoint; }
 
 public:
 	void StartMouseMove(const CPoint& point, MouseStartOption option);
 	void MouseMove(const CPoint& point);
+	void EndMouseMove() { m_mode = MODE_NONE; }
 	void EndMouseMove(const CPoint& point);
 	bool IsMouseMoving() const { return m_mode != MODE_NONE; }
 	bool IsMouseMoved() const { return m_isMouseMoved; }

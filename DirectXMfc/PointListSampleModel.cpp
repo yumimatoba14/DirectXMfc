@@ -437,6 +437,7 @@ void MultiPointListSampleModel2::OnDrawTo(D3D11Graphics::D3DGraphics3D& g)
 			double precision = CalcPointListEnumerationPrecision(modelToViewMatrix, instance.aabb);
 			instance.pObject->SetDrawingPrecision(precision);
 			instance.pObject->SetMaxPointCountDrawnPerFrame(maxPointPerInst);
+			instance.pObject->SetPointSelectionTargetIdFirst(uint64_t(iBlock + 1) << 32);
 			instance.pObject->PrepareFirstDraw(g);
 		}
 	}
