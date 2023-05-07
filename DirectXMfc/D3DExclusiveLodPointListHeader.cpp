@@ -29,6 +29,14 @@ void D3DExclusiveLodPointListHeader::SetLevelInfo(double baseLength, uint64_t nP
 	m_levelInfos[baseLength] = level;
 }
 
+uint64_t D3DExclusiveLodPointListHeader::GetPointCount() const
+{
+	if (m_levelInfos.empty()) {
+		return 0;
+	}
+	return m_levelInfos.rbegin()->second.nPoint;
+}
+
 uint64_t D3DExclusiveLodPointListHeader::GetEnoughPointCount(double baseLength) const
 {
 	P_IS_TRUE(!m_levelInfos.empty());

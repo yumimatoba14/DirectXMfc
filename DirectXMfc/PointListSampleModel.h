@@ -127,6 +127,7 @@ public:
 	const std::vector<InstanceData>& GetIntanceList() const { return m_instanceList; }
 protected:
 	virtual void OnDrawTo(D3D11Graphics::D3DGraphics3D& g);
+	virtual std::vector<D3D11Graphics::D3DVector3d> OnSelectPoints(D3D11Graphics::D3DSelectionTargetId selId);
 
 private:
 	void UpdateDrawnInstances(D3D11Graphics::D3DGraphics3D& g);

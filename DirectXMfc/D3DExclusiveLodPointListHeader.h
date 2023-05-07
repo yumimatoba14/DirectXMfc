@@ -24,6 +24,7 @@ public:
 	bool IsInitialized() const { return !m_levelInfos.empty(); }
 	void ClearLevelInfo() { m_levelInfos.clear(); }
 	void SetLevelInfo(double baseLength, uint64_t nPoint);
+	uint64_t GetPointCount() const;
 	uint64_t GetEnoughPointCount(double baseLength) const;
 	double GetFirstLevelLength() const;
 	double GetNextLevelLength(double currLength) const;

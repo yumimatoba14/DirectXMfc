@@ -4,6 +4,12 @@
 #include <wrl/client.h>
 #include <memory>
 
+#if defined(_WIN64)
+#define D3D_IS_32BIT_MODULE (0)
+#else
+#define D3D_IS_32BIT_MODULE (1)
+#endif
+
 namespace D3D11Graphics {
 
 typedef Microsoft::WRL::ComPtr<ID3D11DeviceContext> D3DDeviceContextPtr;

@@ -636,4 +636,17 @@ void MultiPointListSampleModel2::PrepareFile()
 	m_isCreatingFile = false;
 }
 
+std::vector<D3DVector3d> MultiPointListSampleModel2::OnSelectPoints(D3DSelectionTargetId selId)
+{
+	std::vector<D3DVector3d> points;
+	for (auto iInstance : m_drawnInstanceIndices) {
+		const InstanceData& instance = m_instanceList[iInstance];
+		D3DExclusiveLodPointListObject::Vertex vertexData;
+		if (instance.pObject->FindPointBySelectionTargetId(selId, &vertexData)) {
+			points.push_back(vertexData.pos);
+		}
+	}
+	return points;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
