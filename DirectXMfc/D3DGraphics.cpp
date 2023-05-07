@@ -15,7 +15,7 @@ D3DGraphics::D3DGraphics()
 	m_pAdapter = SelectGraphicsAdapter();
 }
 
-D3DGraphics::DXGIAdapterPtr D3DGraphics::SelectGraphicsAdapter()
+DXGIAdapterPtr D3DGraphics::SelectGraphicsAdapter()
 {
 	ComPtr<IDXGIFactory> pFactory;
 

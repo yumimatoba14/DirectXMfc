@@ -12,6 +12,8 @@
 
 namespace D3D11Graphics {
 
+typedef Microsoft::WRL::ComPtr<IDXGIAdapter> DXGIAdapterPtr;
+typedef Microsoft::WRL::ComPtr<ID3D11Device> D3DDevicePtr;
 typedef Microsoft::WRL::ComPtr<ID3D11DeviceContext> D3DDeviceContextPtr;
 
 typedef Microsoft::WRL::ComPtr<ID3D11InputLayout> D3DInputLayoutPtr;

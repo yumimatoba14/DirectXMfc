@@ -13,8 +13,6 @@ class D3DVertexBufferEnumerator;
 class D3DGraphics
 {
 public:
-	typedef Microsoft::WRL::ComPtr<IDXGIAdapter> DXGIAdapterPtr;
-
 	enum class DrawMode {
 		DRAW_NORMAL = 0,
 		DRAW_FOR_SELECTION,
