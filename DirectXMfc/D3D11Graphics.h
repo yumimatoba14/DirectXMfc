@@ -12,6 +12,7 @@ typedef Microsoft::WRL::ComPtr<ID3D11InputLayout> D3DInputLayoutPtr;
 typedef Microsoft::WRL::ComPtr<ID3D11VertexShader> D3DVertexShaderPtr;
 typedef Microsoft::WRL::ComPtr<ID3D11GeometryShader> D3DGeometryShaderPtr;
 typedef Microsoft::WRL::ComPtr<ID3D11PixelShader> D3DPixelShaderPtr;
+typedef Microsoft::WRL::ComPtr<ID3D11DepthStencilState> D3DDepthStencilStatePtr;
 typedef Microsoft::WRL::ComPtr<ID3D11Resource> ID3DResourcePtr;
 typedef Microsoft::WRL::ComPtr<ID3D11Buffer> D3DBufferPtr;
 

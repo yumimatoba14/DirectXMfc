@@ -9,6 +9,7 @@
 #include <sstream>
 #include "DirectXMfc.h"
 #include "ChildView.h"
+#include "D3DModelColorUtil.h"
 #include "D3DModelPointList.h"
 #include "PointListSampleModel.h"
 #include "D3DModelTriangleList.h"
@@ -103,6 +104,18 @@ void CChildView::UpdateView()
 	Invalidate(TRUE);	// The value of TRUE is actually not used because OnEraseBkgnd() has been overridden.
 }
 
+void CChildView::DrawSelectedEntities()
+{
+	vector<D3DGraphics3D::PointListVertex> vertices;
+	for (auto pointVec : this->m_selectedPoints) {
+		D3DGraphics3D::PointListVertex vertex;
+		D3DVector::CopyTo(pointVec, &(vertex.pos));
+		vertex.rgba = D3DModelColorUtil::Rgb(255, 0, 0);
+		vertices.push_back(vertex);
+	}
+	m_graphics.DrawPointArray(vertices.data(), vertices.size());
+}
+
 void CChildView::OnPaint()
 {
 	P_NOEXCEPT_BEGIN("CChildView::OnPaint");
@@ -140,6 +153,11 @@ void CChildView::OnPaint()
 	}
 	m_graphics.DrawBegin();
 	m_pModel->DrawTo(m_graphics);
+	if (!m_selectedPoints.empty()) {
+		m_graphics.SetDrawSelectedEntityMode(true);
+		DrawSelectedEntities();
+		m_graphics.SetDrawSelectedEntityMode(false);
+	}
 	m_graphics.DrawEnd();
 
 	bool isSaveViewImage = false;

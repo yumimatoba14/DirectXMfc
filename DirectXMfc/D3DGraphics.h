@@ -16,6 +16,11 @@ public:
 	typedef Microsoft::WRL::ComPtr<IDXGIAdapter> DXGIAdapterPtr;
 	typedef Microsoft::WRL::ComPtr<ID3D11Texture2D> D3D11Texture2DPtr;
 
+	enum class DrawMode {
+		DRAW_NORMAL = 0,
+		DRAW_SELECTED_ENTITY
+	};
+
 	static DXGIAdapterPtr SelectGraphicsAdapter();
 
 	D3DGraphics();
@@ -67,6 +72,9 @@ public:
 
 	// functions for DeviceContext.
 public:
+	DrawMode GetDrawMode() const { return m_drawMode; }
+	void SetDrawSelectedEntityMode(bool isSelectedEntityMode);
+
 	void DrawBegin(bool isEraseBackground);
 	void DrawPointList(
 		const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, size_t vertexSize, size_t nVertex
@@ -95,7 +103,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pDC;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> m_pSwapChain;
 
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_pDepthStencilState;
+	D3DDepthStencilStatePtr m_pDepthStencilState;
+	D3DDepthStencilStatePtr m_pDepthStencilStateForSelectedEntity;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;
 
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_pRenderTargetView;
@@ -103,6 +112,7 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_pRasterizerState;
 
+	DrawMode m_drawMode = DrawMode::DRAW_NORMAL;
 	int64_t m_nDrawnPoint = 0;
 };
 

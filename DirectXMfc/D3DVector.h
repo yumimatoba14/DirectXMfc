@@ -183,6 +183,18 @@ public:
 			aCoord[i] = D3DVectorTraits<V>::GetAt(vec, i);
 		}
 	}
+
+	template<class V1, class V2>
+	static void CopyTo(const V1& vecFrom, V2* pVecTo)
+	{
+		P_IS_TRUE(pVecTo != nullptr);
+		P_IS_TRUE(D3DVectorTraits<V1>::DIM <= D3DVectorTraits<V2>::DIM);
+		for (int i = 0; i < D3DVectorTraits<V1>::DIM; ++i) {
+			D3DVectorTraits<V2>::SetAt(*pVecTo, i,
+				static_cast<D3DVectorTraits<V2>::CoordType>(D3DVectorTraits<V1>::GetAt(vecFrom, i))
+			);
+		}
+	}
 };
 
 } // namespace D3D11Graphics

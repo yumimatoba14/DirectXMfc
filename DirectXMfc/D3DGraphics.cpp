@@ -137,6 +137,13 @@ void D3DGraphics::Setup(HWND hWnd, const CSize& rectSize)
 		P_THROW_ERROR("CreateDepthStencilState");
 	}
 
+	D3D11_DEPTH_STENCIL_DESC depthStencilForSelectedEntityDesc = depthStencilDesc;
+	depthStencilForSelectedEntityDesc.DepthEnable = FALSE;
+	hr = m_pDevice->CreateDepthStencilState(&depthStencilForSelectedEntityDesc, &m_pDepthStencilStateForSelectedEntity);
+	if (FAILED(hr)) {
+		P_THROW_ERROR("CreateDepthStencilState");
+	}
+
 	PrepareDepthStencilView();
 	PrepareRenderTargetView();
 
@@ -396,6 +403,20 @@ D3DMappedSubResource D3DGraphics::MapDyamaicBuffer(const D3DBufferPtr& pDynamicB
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void D3DGraphics::SetDrawSelectedEntityMode(bool isSelectedEntityMode)
+{
+	if (isSelectedEntityMode) {
+		P_IS_TRUE(GetDrawMode() == DrawMode::DRAW_NORMAL);	// not supported in other cases.
+		m_drawMode = DrawMode::DRAW_SELECTED_ENTITY;
+		m_pDC->OMSetDepthStencilState(m_pDepthStencilStateForSelectedEntity.Get(), 1);
+	}
+	else {
+		P_IS_TRUE(GetDrawMode() == DrawMode::DRAW_SELECTED_ENTITY);	// not supported in other cases.
+		m_drawMode = DrawMode::DRAW_NORMAL;
+		m_pDC->OMSetDepthStencilState(m_pDepthStencilState.Get(), 1);
+	}
+}
+
 void D3DGraphics::DrawBegin(bool isEraseBackground)
 {
 	PrepareDepthStencilView();
@@ -431,7 +452,9 @@ void D3DGraphics::DrawPointList(
 	SetShaderContext(sc);
 	m_pDC->Draw((UINT)nVertex, 0);
 
-	m_nDrawnPoint += nVertex;
+	if (GetDrawMode() == DrawMode::DRAW_NORMAL) {
+		m_nDrawnPoint += nVertex;
+	}
 }
 
 void D3DGraphics::DrawPointLists(
@@ -442,6 +465,7 @@ void D3DGraphics::DrawPointLists(
 	m_pDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	SetShaderContext(sc);
 	UINT aVertexSize[1] = { (UINT)vertexSize };
+	const bool isCount = GetDrawMode() == DrawMode::DRAW_NORMAL;
 
 	for (; pVertexBufs->HasCurrent();  pVertexBufs->GoNext()) {
 		ID3D11Buffer* apVB[1] = { pVertexBufs->GetCurrent().pVertexBuffer.Get() };
@@ -451,7 +475,9 @@ void D3DGraphics::DrawPointLists(
 		const UINT nVertex = pVertexBufs->GetCurrent().nVertex;
 		m_pDC->Draw(nVertex, 0);
 
-		m_nDrawnPoint += nVertex;
+		if (isCount) {
+			m_nDrawnPoint += nVertex;
+		}
 	}
 }
 

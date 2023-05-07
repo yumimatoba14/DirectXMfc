@@ -106,6 +106,8 @@ public:
 	void DrawBegin();
 	void DrawEnd() { m_graphics.DrawEnd(); }
 
+	void SetDrawSelectedEntityMode(bool selectedEntityMode);
+
 	void DrawPointList(D3DModelPointList* pModel);
 	void DrawPointListEnumerator(D3DModelPointListEnumerator* pModel);
 	void DrawPointArray(const PointListVertex aVertex[], int64_t nVertex);

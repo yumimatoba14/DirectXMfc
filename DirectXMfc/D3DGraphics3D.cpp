@@ -110,6 +110,12 @@ void D3DGraphics3D::DrawBegin()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void D3DGraphics3D::SetDrawSelectedEntityMode(bool selectedEntityMode)
+{
+	m_graphics.SetDrawSelectedEntityMode(selectedEntityMode);
+}
+
+
 void D3DGraphics3D::DrawPointList(D3DModelPointList* pModel)
 {
 	P_IS_TRUE(pModel != nullptr);

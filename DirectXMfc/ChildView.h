@@ -8,6 +8,7 @@
 #include "D3DGraphics3D.h"
 #include "D3DViewOp.h"
 #include "D3DDrawingModel.h"
+#include "D3DVector.h"
 #include <memory>
 
 // CChildView ウィンドウ
@@ -36,6 +37,7 @@ public:
 private:
 	void UpdateShaderParam();
 	void UpdateView();
+	void DrawSelectedEntities();
 private:
 	D3D11Graphics::D3DGraphics3D m_graphics;
 	D3DViewOp m_viewOp;
@@ -45,6 +47,7 @@ private:
 	uint64_t m_nDrawnPoint = 0;
 	ULONGLONG m_totalStartTickMiliSec = 0;
 	ULONGLONG m_maxFrameTimeMiliSec = 0;
+	std::vector<D3D11Graphics::D3DVector3d> m_selectedPoints;
 
 	// 生成された、メッセージ割り当て関数
 protected:
