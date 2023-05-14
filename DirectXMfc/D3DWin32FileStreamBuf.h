@@ -24,6 +24,8 @@ public:
 	{
 	}
 
+	virtual ~D3DWin32FileStreamBuf();
+
 	void AttachHandle(HANDLE hFile)
 	{
 		OnDetachHandle();

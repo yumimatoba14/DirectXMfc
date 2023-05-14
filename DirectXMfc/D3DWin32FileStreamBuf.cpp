@@ -4,6 +4,17 @@
 using namespace std;
 using namespace D3D11Graphics;
 
+////////////////////////////////////////////////////////////////////////////////
+
+D3DWin32FileStreamBuf::~D3DWin32FileStreamBuf()
+{
+	P_NOEXCEPT_BEGIN("D3DWin32FileStreamBuf::~D3DWin32FileStreamBuf");
+	OnDetachHandle();
+	P_NOEXCEPT_END;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void D3DWin32FileStreamBuf::Read(void* pBuffer, size_t nByte)
 {
 	size_t nRead = TryRead(pBuffer, nByte);
@@ -48,7 +59,7 @@ std::streamsize D3DWin32FileStreamBuf::xsgetn(char_type* aOutByte, std::streamsi
 				// gbump() supports only int. So maximum number here shall be INT_MAX.
 				nCopy = INT_MAX;
 			}
-			traits_type::copy(aOutByte + nCopied, gptr(), nCopy);
+			traits_type::copy(aOutByte + nCopied, gptr(), (int)nCopy);
 			gbump((int)nCopy);
 			nCopied += nCopy;
 		}
@@ -80,8 +91,10 @@ D3DWin32FileStreamBuf::int_type D3DWin32FileStreamBuf::underflow()
 	P_IS_TRUE(!IsWriteBufferEnabled());
 	P_ASSERT(gptr() == egptr());
 	if (m_buffer.empty()) {
-		P_ASSERT(false);	// uflow() must be used, instead.
-		return traits_type::eof();
+		// sgetc() may call underflow() in this case.
+		// Add a buffer for single character to hold current position.
+		// In any case, small buffer is not used by xsgetn() or xsputn().
+		m_buffer.resize(1);
 	}
 	streamsize streamBufferSize = static_cast<streamsize>(m_buffer.size());
 	streamsize nRead = ReadFromFile(streamBufferSize, m_buffer.data());
@@ -126,13 +139,14 @@ std::streamsize D3DWin32FileStreamBuf::xsputn(const char_type* aBuffer, std::str
 		// There are some bytes in the buffer and the buffer is full.
 		// Write the buffer to file in order to try to make some space in the buffer.
 		streamsize nByteInBuf = pptr() - pbase();
+		P_ASSERT(nByteInBuf <= SIZE_MAX);
 		streamsize nWritten = WriteToFile(nByteInBuf, pbase());
 		P_ASSERT(0 <= nWritten);
 		if (nWritten == 0) {
 			return 0;	// failed to write.
 		}
 		if (nWritten < nByteInBuf) {
-			streamsize nRemainingByte = nByteInBuf - nWritten;
+			size_t nRemainingByte = static_cast<size_t>(nByteInBuf - nWritten);
 			traits_type::move(pbase(), pbase() + nWritten, nRemainingByte);
 			setp(pbase(), pbase() + nRemainingByte, epptr());
 		}
@@ -144,12 +158,15 @@ std::streamsize D3DWin32FileStreamBuf::xsputn(const char_type* aBuffer, std::str
 	streamsize bufferSpace = epptr() - pptr();
 	if (bufCount <= bufferSpace) {
 		// If there are enough space in the buffer, write data to the buffer.
-		traits_type::copy(pptr(), aBuffer, bufCount);
 		streamsize i = bufCount;
+		streamsize numCopied = 0;
 		while (INT_MAX < i) {
+			traits_type::copy(pptr(), aBuffer + numCopied, INT_MAX);
 			pbump(INT_MAX);
+			numCopied += INT_MAX;
 			i -= INT_MAX;
 		}
+		traits_type::copy(pptr(), aBuffer + numCopied, static_cast<int>(i));
 		pbump(static_cast<int>(i));
 		return bufCount;
 	}
@@ -236,6 +253,7 @@ void D3DWin32FileStreamBuf::OnDetachHandle()
 	if (pubsync()) {
 		P_THROW_ERROR("pubsync");
 	}
+	m_hFile = nullptr;
 }
 
 std::streamsize D3DWin32FileStreamBuf::ReadFromFile(std::streamsize nBufferByte, char* aBufferByte)
@@ -249,12 +267,12 @@ std::streamsize D3DWin32FileStreamBuf::ReadFromFile(std::streamsize nBufferByte,
 			bufSize = DWORD_MAX;
 		}
 		DWORD nReadByteLocal = 0;
-		BOOL isOk = ::ReadFile(m_hFile, aBufferByte, bufSize, &nReadByteLocal, nullptr);
+		BOOL isOk = ::ReadFile(m_hFile, aBufferByte + nReadByte, bufSize, &nReadByteLocal, nullptr);
 		if (!isOk) {
 			P_THROW_ERROR("ReadFile");
 		}
 		nReadByte += nReadByteLocal;
-		if (nReadByte != bufSize) {
+		if (nReadByteLocal != bufSize) {
 			break;
 		}
 		nRemainingByte -= nReadByteLocal;
@@ -273,7 +291,7 @@ std::streamsize D3DWin32FileStreamBuf::WriteToFile(std::streamsize nBufferByte, 
 			bufSize = DWORD_MAX;
 		}
 		DWORD nWritten = 0;
-		BOOL isOk = ::WriteFile(m_hFile, aBufferByte, bufSize, &nWritten, nullptr);
+		BOOL isOk = ::WriteFile(m_hFile, aBufferByte + nWrittenByte, bufSize, &nWritten, nullptr);
 		if (!isOk) {
 			P_THROW_ERROR("WriteFile");
 		}
