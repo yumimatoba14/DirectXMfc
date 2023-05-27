@@ -107,7 +107,7 @@ public:
 
 	void Close();
 
-	bool IsOpened() const { return m_hFileMapping != INVALID_HANDLE_VALUE; }
+	bool IsOpened() const { return m_hFileMapping != nullptr; }
 	MappedPtr MapView(uint64_t filePos, size_t viewSize);
 
 	friend inline void swap(D3DMemoryMappedFile& left, D3DMemoryMappedFile& right) noexcept
