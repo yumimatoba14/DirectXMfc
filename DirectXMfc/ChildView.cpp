@@ -117,7 +117,8 @@ void CChildView::SelectPointImpl(const CPoint& selectPointOnView)
 		m_selectedPoints.clear();
 	}
 	else {
-		m_selectedPoints = m_pModel->SelectPoints(pickedId);
+		auto newPoints = m_pModel->SelectPoints(pickedId);
+		copy(newPoints.begin(), newPoints.end(), back_inserter(m_selectedPoints));
 	}
 
 	Invalidate();
@@ -133,6 +134,9 @@ void CChildView::DrawSelectedEntities()
 		vertices.push_back(vertex);
 	}
 	m_graphics.DrawPointArray(vertices.data(), vertices.size());
+	if (1 < vertices.size()) {
+		m_graphics.DrawPolyline(vertices.data(), vertices.size());
+	}
 }
 
 void CChildView::OnPaint()
