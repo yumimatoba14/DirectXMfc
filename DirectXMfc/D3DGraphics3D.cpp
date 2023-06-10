@@ -213,11 +213,7 @@ void D3DGraphics3D::DrawPointArray(const PointListVertex aVertex[], int64_t nVer
 {
 	P_IS_TRUE(aVertex != nullptr);
 	const bool isSelectionMode = m_graphics.IsSelectionMode();
-	if (!m_pTempVertexBuffer) {
-		m_pTempVertexBuffer = m_graphics.CreateVertexBufferWithSize(
-			m_tempBufferVertexNumMax * sizeof(PointListVertex), nullptr, true
-		);
-	}
+	auto pTempVertexBuffer = PrepareTempVertexBuffer();
 	if (isSelectionMode && !m_pTempVertexStIdBuffer) {
 		m_pTempVertexStIdBuffer = m_graphics.CreateVertexBufferWithSize(
 			m_tempBufferVertexNumMax * sizeof(D3DSelectionTargetId), nullptr, true
@@ -232,13 +228,13 @@ void D3DGraphics3D::DrawPointArray(const PointListVertex aVertex[], int64_t nVer
 		P_ASSERT(int64_t(nVertexInBuf) <= nRemainingVertex);
 
 		{
-			D3DMappedSubResource mappedMemory = m_graphics.MapDyamaicBuffer(m_pTempVertexBuffer);
+			D3DMappedSubResource mappedMemory = m_graphics.MapDyamaicBuffer(pTempVertexBuffer);
 			UINT dataSize = static_cast<UINT>(nVertexInBuf * sizeof(PointListVertex));
 			mappedMemory.Write(aVertex + (nVertex - nRemainingVertex), dataSize);
 		}
 		if (!isSelectionMode) {
 			m_graphics.DrawPointList(
-				GetPointListShaderContext(), m_pTempVertexBuffer,
+				GetPointListShaderContext(), pTempVertexBuffer,
 				sizeof(PointListVertex), nVertexInBuf
 			);
 		} else {
@@ -258,12 +254,40 @@ void D3DGraphics3D::DrawPointArray(const PointListVertex aVertex[], int64_t nVer
 
 			m_graphics.DrawPointList(
 				GetPointListShaderContext(), nVertexInBuf,
-				m_pTempVertexBuffer, sizeof(PointListVertex),
+				pTempVertexBuffer, sizeof(PointListVertex),
 				m_pTempVertexStIdBuffer, sizeof(D3DSelectionTargetId)
 			);
 		}
 
 		nRemainingVertex -= nVertexInBuf;
+	}
+}
+
+void D3DGraphics3D::DrawPolyline(const PointListVertex aPolylineVertex[], size_t nPolylineVertex)
+{
+	if (m_graphics.IsSelectionMode()) {
+		P_ASSERT(false);	// not supported.
+		return;
+	}
+	auto pTempVertexBuffer = PrepareTempVertexBuffer();
+	const int64_t nVertexInBufUpperBound = m_tempBufferVertexNumMax;
+	P_ASSERT(1 < nVertexInBufUpperBound);
+
+	int64_t nRemainingVertex = nPolylineVertex;
+	while (1 < nRemainingVertex) {
+		size_t nVertexInBuf = static_cast<size_t>(min(nVertexInBufUpperBound, nRemainingVertex));
+		P_ASSERT(int64_t(nVertexInBuf) <= nRemainingVertex);
+		{
+			D3DMappedSubResource mappedMemory = m_graphics.MapDyamaicBuffer(pTempVertexBuffer);
+			UINT dataSize = static_cast<UINT>(nVertexInBuf * sizeof(PointListVertex));
+			mappedMemory.Write(aPolylineVertex + (nPolylineVertex - nRemainingVertex), dataSize);
+		}
+
+		m_graphics.DrawLineStrip(
+			GetLineShaderContext(), pTempVertexBuffer, sizeof(PointListVertex), nVertexInBuf);
+
+		// The last vertex is necessary in the next turn, again.
+		nRemainingVertex -= (nVertexInBuf - 1);
 	}
 }
 
@@ -328,6 +352,14 @@ void D3DGraphics3D::InitializeShaderContextsForNormalRendering()
 		m_pShaderParamConstBuf,
 		m_triangleListSc.GetPixelShader()
 	);
+
+	m_lineSc.Init(
+		m_pointListSc.GetIAInputLayout(),
+		m_triangleListSc.GetVertexShader(),
+		m_pShaderParamConstBuf,
+		nullptr, nullptr,
+		m_triangleListSc.GetPixelShader()
+	);
 }
 
 void D3DGraphics3D::InitializeShaderContextsForSelection()
@@ -388,4 +420,14 @@ double D3DGraphics3D::GetAspectRatio() const
 XMMATRIX D3DGraphics3D::MakeProjectionMatrix(double aspectRatio) const
 {
 	return XMMatrixPerspectiveFovRH(XMConvertToRadians((float)m_fovAngleYDeg), (float)aspectRatio, m_viewNearZ, m_viewFarZ);
+}
+
+D3DBufferPtr D3DGraphics3D::PrepareTempVertexBuffer()
+{
+	if (!m_pTempVertexBuffer) {
+		m_pTempVertexBuffer = m_graphics.CreateVertexBufferWithSize(
+			m_tempBufferVertexNumMax * sizeof(PointListVertex), nullptr, true
+		);
+	}
+	return m_pTempVertexBuffer;
 }

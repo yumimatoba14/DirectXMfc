@@ -96,6 +96,9 @@ public:
 	void DrawPointLists(
 		const D3DShaderContext& sc, D3DVertexBufferEnumerator* pVertexBufs, size_t vertexSize
 	);
+	void DrawLineStrip(
+		const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, size_t vertexSize, size_t nVertex
+	);
 	void DrawTriangleList(
 		const D3DShaderContext& sc, const D3DBufferPtr& pVertexBuf, const D3DBufferPtr& pIndexBuf,
 		size_t vertexSize, size_t nIndex

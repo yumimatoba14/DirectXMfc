@@ -113,6 +113,7 @@ public:
 	void DrawPointList(D3DModelPointList* pModel);
 	void DrawPointListEnumerator(D3DModelPointListEnumerator* pModel);
 	void DrawPointArray(const PointListVertex aVertex[], int64_t nVertex, D3DSelectionTargetId selectionTargetIdFirst = D3D_SELECTION_TARGET_NULL);
+	void DrawPolyline(const PointListVertex aPolylineVertex[], size_t nPolylineVertex);
 	void DrawTriangleList(D3DModelTriangleList* pModel);
 
 	void ResizeBuffers(const SIZE& newSize);
@@ -143,6 +144,9 @@ private:
 			return m_pointListSc;
 		}
 	}
+	const D3DShaderContext& GetLineShaderContext() const {
+		return m_lineSc;
+	}
 
 	void OnModelToViewMatrixModified() {
 		m_isNeedToUpdateModelToViewMatrix = true;
@@ -159,6 +163,8 @@ private:
 		}
 	}
 	void UpdateShaderParam();
+
+	D3DBufferPtr PrepareTempVertexBuffer();
 
 private:
 	D3DGraphics m_graphics;
@@ -182,6 +188,7 @@ private:
 	double m_pointSize;
 	D3DBufferPtr m_pShaderParamConstBuf;
 	D3DShaderContext m_triangleListSc;
+	D3DShaderContext m_lineSc;
 	D3DShaderContext m_pointListSc;
 	D3DShaderContext m_selectionTriangleListSc;
 	D3DShaderContext m_selectionPointListSc;
